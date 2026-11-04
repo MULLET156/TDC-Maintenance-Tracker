@@ -201,7 +201,8 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-
 .daychip input{accent-color:var(--accent);margin:0}
 .tdays{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0 0 2px 100px}
 .tdl{font-size:12px;font-weight:600;color:var(--muted);margin-right:2px}
-.daychip.sm{padding:3px 9px;font-size:13px;gap:5px;border-radius:7px}
+.daychip.sm{padding:3px 9px;font-size:13px;gap:5px;border-radius:7px;white-space:nowrap;flex:none}
+@media (max-width:620px){.daychip.sm{padding:3px 7px;gap:4px}}
 .note.warn{color:var(--soon);flex-basis:100%;margin:2px 0 0}
 @media (max-width:620px){.tdays{padding-left:0}}
 .house summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)}
@@ -435,6 +436,13 @@ function taskDays(t){const od=openDays(),d=ownDays(t);if(!d)return od;const k=od
 const daysLost=t=>{const d=ownDays(t);return !!d&&!openDays().some(x=>d.includes(x))};
 const hasOwnDays=t=>!!ownDays(t)&&!daysLost(t)&&openDays().some(x=>!t.days.includes(x));
 const daysText=(days,sep)=>WEEK.filter(d=>days.includes(d)).map(d=>DAYN[d]).join(sep);
+/* Weekly tasks can be pinned to one clinic day (task.wday). A completion counts for the nearest
+   pinned day (up to 3 days early or late); the next one is due on that day the following week. */
+const DAYF=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const ownWday=t=>t.freq==="Weekly"&&Number.isInteger(t.wday)&&openDays().includes(t.wday)?t.wday:null;
+const wdayLost=t=>t.freq==="Weekly"&&Number.isInteger(t.wday)&&!openDays().includes(t.wday);
+function nextWeekly(last,rule,D){const off=((D-last.getDay())+7)%7,c=new Date(last);c.setDate(c.getDate()+(off<=3?off:off-7));
+  const x=addRule(c,rule);for(let i=0;i<7&&x.getDay()!==D;i++)x.setDate(x.getDate()+1);return x}
 const DAYS_OK=v=>{const s=String(v||"").trim().toLowerCase();if(!s||/^(every|all|daily|any)/.test(s))return null;const out=new Set();
   for(const w of s.split(/[^a-z]+/))if(w.length>=2){const i=DAYN.findIndex(n=>n.toLowerCase().startsWith(w.slice(0,3)));if(i>=0)out.add(i)}
   return out.size?[...out].sort((a,b)=>a-b):null};
@@ -454,7 +462,7 @@ function lastFor(t){
 function statusOf(t){
   if(t.off||t.freq==="Optional"||!RULE[t.freq])return{s:"opt",label:t.list==="optional"?"Off":"Optional"};
   const last=lastFor(t); if(!last)return{s:"new",label:S.resets[t.list]?"Not done since reset":"Never logged",last:null};
-  const next=nextDue(parse(last.date),RULE[t.freq],t.freq==="Daily"?taskDays(t):null); const diff=dayDiff(new Date(),next);
+  const D=ownWday(t),next=D!=null?nextWeekly(parse(last.date),RULE[t.freq],D):nextDue(parse(last.date),RULE[t.freq],t.freq==="Daily"?taskDays(t):null); const diff=dayDiff(new Date(),next);
   let s,label;
   if(diff<0){s="over";label="Overdue"}else if(diff<=RULE[t.freq].soon){s="soon";label=diff===0?"Due today":"Due soon"}else{s="ok";label="On track"}
   return{s,label,last,next:iso(next),diff};
@@ -603,7 +611,7 @@ async function exportBackup(){if(!S.dl){toast("Downloads aren't available here."
   catch(e){if(e&&e.code==="declined")return;toast("The backup didn't finish. Try again.")}}
 async function exportTasks(){if(!S.dl){toast("Downloads aren't available here.");return}
   const ts=S.tasks.slice().sort((a,b)=>{const fa=a.freq==="Optional"?(a.trackFreq||"Monthly"):a.freq,fb=b.freq==="Optional"?(b.trackFreq||"Monthly"):b.freq;return ((FRANK[fa]??9)-(FRANK[fb]??9))||((a.order??0)-(b.order??0))});
-  const lines=[["Task","Frequency","Status","Days"].map(csvCell).join(",")].concat(ts.map(t=>[t.name,t.freq==="Optional"?(t.trackFreq||"Monthly"):t.freq,(t.off||t.freq==="Optional")?"Off":"On",hasOwnDays(t)?daysText(taskDays(t)," "):""].map(csvCell).join(",")));
+  const lines=[["Task","Frequency","Status","Days"].map(csvCell).join(",")].concat(ts.map(t=>[t.name,t.freq==="Optional"?(t.trackFreq||"Monthly"):t.freq,(t.off||t.freq==="Optional")?"Off":"On",hasOwnDays(t)?daysText(taskDays(t)," "):ownWday(t)!=null?DAYN[t.wday]:""].map(csvCell).join(",")));
   try{await S.dl.save({filename:`TDC task list ${todayISO()}.csv`,data:lines.join("\r\n")});toast(`Exported ${ts.length} tasks.`)}
   catch(e){if(e&&e.code==="declined")return;toast("The export didn't finish. Try again.")}}
 async function planImport(file){
@@ -654,10 +662,12 @@ async function applyImport(){const p=S.imp;if(!p||S.impBusy)return;S.impBusy=tru
         if(it.ex){const t=S.tasks.find(x=>x.id===it.ex);if(!t)continue;const up={};
           if(it.freq&&(it.freq!==t.freq||it.freq.toLowerCase()!==t.list)){up.freq=it.freq;up.list=it.freq.toLowerCase()}
           if(it.off!==null&&!!t.off!==it.off)up.off=it.off;
-          if(it.days!==undefined&&JSON.stringify(t.days??null)!==JSON.stringify(it.days))up.days=it.days;
+          if(it.days!==undefined){const ef=up.freq||t.freq;
+            if(ef==="Weekly"){const w=it.days?it.days[0]:null;if((Number.isInteger(t.wday)?t.wday:null)!==w)up.wday=w}
+            else if(JSON.stringify(t.days??null)!==JSON.stringify(it.days))up.days=it.days}
           if(t.freq==="Optional"&&it.off===false&&!up.freq){const f=t.trackFreq||"Monthly";up.freq=f;up.list=f.toLowerCase()}
           if(Object.keys(up).length){await S.db.doc("tasks/"+t.id).update(up);u++}}
-        else{const f=it.freq||"Monthly";await S.db.collection("tasks").add({name:it.name,freq:f,list:f.toLowerCase(),order:++max,off:it.off===true,...(it.days?{days:it.days}:{})});a++}}
+        else{const f=it.freq||"Monthly";await S.db.collection("tasks").add({name:it.name,freq:f,list:f.toLowerCase(),order:++max,off:it.off===true,...(it.days?(f==="Weekly"?{wday:it.days[0]}:{days:it.days}):{})});a++}}
       toast(`Added ${a} task${a===1?"":"s"} and updated ${u}.`);
     }
     S.imp=null;S.impRemove=false;
@@ -715,6 +725,7 @@ function swCell(t){
 function rowHTML(t){
   const st=statusOf(t), open=S.open===t.id, last=st.last;
   const bits=[`<span class="pill">${st.label}</span>`,(t.list==="optional"&&t.freq==="Optional"&&S.canWrite)?`<label class="mini">Frequency when on <select id="tf-${t.id}" data-track="${t.id}">${FREQS.filter(f=>f!=="Optional").map(f=>`<option ${f===(t.trackFreq||"Monthly")?"selected":""}>${f}</option>`).join("")}</select></label>`:`<span>${t.freq==="Optional"&&t.trackFreq?"Suggested: "+esc(t.trackFreq):esc(t.freq)}</span>`];
+  if(ownWday(t)!=null)bits.push(`<span>${DAYF[t.wday]}s</span>`);
   if(hasOwnDays(t))bits.push(`<span>${daysText(taskDays(t)," · ")}</span>`);
   if(last)bits.push(`<span>Last <span class="mono">${fmt(last.date)}</span> · ${esc(last.initials||"")}</span>`);
   if(st.next)bits.push(`<span>Next <span class="mono">${fmt(st.next)}</span></span>`);
@@ -775,8 +786,11 @@ function viewHistory(){
 }
 function daysRowHTML(t){const od=WEEK.filter(d=>openDays().includes(d)),sel=taskDays(t);
   return `<div class="tdays" role="group" aria-label="Days for ${esc(t.name)}"><span class="tdl">Days</span>${od.map(d=>`<label class="daychip sm"><input type="checkbox" id="td-${t.id}-${d}" data-tday="${t.id}" value="${d}" ${sel.includes(d)?"checked":""}><span>${DAYN[d]}</span></label>`).join("")}${daysLost(t)?`<span class="note warn">None of the days picked for this task are clinic days anymore, so it's due every clinic day for now. Pick its days again.</span>`:""}</div>`}
+function wdayRowHTML(t){const od=WEEK.filter(d=>openDays().includes(d)),sel=ownWday(t),nm="wd-"+t.id;
+  const chip=(v,lbl)=>`<label class="daychip sm"><input type="radio" name="${nm}" id="tw-${t.id}-${v===null?"x":v}" data-twday="${t.id}" value="${v===null?"":v}" ${sel===v?"checked":""}><span>${lbl}</span></label>`;
+  return `<div class="tdays" role="radiogroup" aria-label="Day of the week for ${esc(t.name)}"><span class="tdl">Day</span>${chip(null,"Any day")}${od.map(d=>chip(d,DAYN[d])).join("")}${wdayLost(t)?`<span class="note warn">This task was set to ${DAYF[t.wday]}, which isn't a clinic day anymore, so it can be done any day for now. Pick its day again.</span>`:""}</div>`}
 function clinicHTML(){const od=openDays();
-  return `<div class="section"><div class="sec-head"><h2>Clinic days</h2></div><p class="note" style="margin:0">Tasks only come due on days the clinic is open. A daily task done on your last open day of the week is next due on your first open day of the next week, and anything that would fall on a closed day moves to the next open one. Each daily task can also be limited to certain days, using the day boxes under it in the Daily list below.</p><div class="list"><div class="chips">${[1,2,3,4,5,6,0].map(d=>`<label class="daychip"><input type="checkbox" id="cd-${d}" data-day="${d}" ${od.includes(d)?"checked":""}><span>${DAYN[d]}</span></label>`).join("")}</div></div></div>`;
+  return `<div class="section"><div class="sec-head"><h2>Clinic days</h2></div><p class="note" style="margin:0">Tasks only come due on days the clinic is open. A daily task done on your last open day of the week is next due on your first open day of the next week, and anything that would fall on a closed day moves to the next open one. Each daily task can also be limited to certain days, and each weekly task can be set to one day of the week, using the day boxes under it in the lists below.</p><div class="list"><div class="chips">${[1,2,3,4,5,6,0].map(d=>`<label class="daychip"><input type="checkbox" id="cd-${d}" data-day="${d}" ${od.includes(d)?"checked":""}><span>${DAYN[d]}</span></label>`).join("")}</div></div></div>`;
 }
 function rulesHTML(){
   const rows=Object.keys(DEF_RULE).map(f=>{const r=RULE[f];const every=r.d||r.m;const unit=r.m?"months":"days";
@@ -804,7 +818,7 @@ function viewSetup(){
         <textarea aria-label="Task name" id="nm-${t.id}" data-rename="${t.id}" rows="1" class="nm">${esc(t.name)}</textarea>
         <select aria-label="Frequency" id="fq-${t.id}" data-freq="${t.id}">${FREQS.map(f=>`<option ${f===t.freq?"selected":""}>${f}</option>`).join("")}</select>
         ${S.confirm==="t-"+t.id?`<span class="confirm"><button class="btn danger" data-deltask="${t.id}">Delete</button><button class="btn ghost" data-cancel>Keep</button></span>`:`<button class="btn ghost" data-ask="t-${t.id}" aria-label="Delete task">Delete</button>`}
-        ${t.freq==="Daily"&&!t.off?daysRowHTML(t):""}
+        ${t.freq==="Daily"&&!t.off?daysRowHTML(t):""}${t.freq==="Weekly"&&!t.off?wdayRowHTML(t):""}
       </div>`).join("")||'<div class="note" style="padding:12px">No tasks in this list.</div>'}
       <form class="addline" data-addtask="${l.k}"><div class="field grow"><label for="new-${l.k}">New ${l.label.toLowerCase()} task</label><input id="new-${l.k}" maxlength="120" required></div>
         <div class="field"><label for="newf-${l.k}">Frequency</label><select id="newf-${l.k}">${FREQS.map(f=>`<option ${f===l.label?"selected":""}>${f}</option>`).join("")}</select></div>
@@ -894,6 +908,8 @@ document.addEventListener("change",async ev=>{
   if(el.id==="impfile"){const f=el.files&&el.files[0];el.value="";if(f)planImport(f);return}
   if(el.id==="imprm"){S.impRemove=el.checked;return}
   if(el.dataset.rename){const v=el.value.replace(/\s+/g," ").trim();if(!v)return;try{await S.db.doc("tasks/"+el.dataset.rename).update({name:v});toast("Renamed.")}catch(e){writeFail(e)}}
+  if(el.dataset.twday){const t=S.tasks.find(x=>x.id===el.dataset.twday);if(!t)return;const v=el.value===""?null:+el.value;
+    try{await S.db.doc("tasks/"+t.id).update({wday:v});toast(v===null?`${t.name}: any day of the week.`:`${t.name}: due ${DAYF[v]}s.`)}catch(e){writeFail(e);render()}return}
   if(el.dataset.tday){const t=S.tasks.find(x=>x.id===el.dataset.tday);if(!t)return;
     const days=[...document.querySelectorAll(`[data-tday="${t.id}"]`)].filter(b=>b.checked).map(b=>+b.value);
     if(!days.length){el.checked=true;toast("Keep at least one day.");return}
