@@ -169,6 +169,13 @@ nav.tabs button[data-tab="today"][aria-selected=true]{background:var(--accent);c
 .chip button:hover{background:var(--surface);color:var(--over)}
 .addline{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;padding:12px;border-top:1px solid var(--line);background:var(--sunk)}
 .note{font-size:13px;color:var(--muted)}
+.modal{position:fixed;inset:0;z-index:40;background:rgba(8,20,22,.45);display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
+.dlg{width:min(420px,100%);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-top:4px solid var(--over);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:10px;box-shadow:0 18px 48px rgba(0,0,0,.3)}
+.dlg h3{margin:0;font-family:var(--f-display);font-stretch:85%;font-weight:800;font-size:21px}
+.dlg p{margin:0;font-size:14px;color:var(--muted)}
+.dlg-actions{justify-content:flex-end;margin-top:6px}
+.btn.danger.solid{background:var(--over);border-color:var(--over);color:var(--bg)}
+.btn.danger.solid:disabled{opacity:.6}
 .io{display:flex;flex-direction:column;gap:6px;padding:12px;border-top:1px solid var(--line)}
 .io:first-child{border-top:0}
 .io .note{margin:0}
@@ -397,7 +404,7 @@ const DEF_RULE={Daily:{d:1,soon:0},Weekly:{d:7,soon:2},Monthly:{m:1,soon:7},Quar
 let RULE={...DEF_RULE};
 const TABS=[["daily","Daily"],["weekly","Weekly"],["monthly","Monthly"],["quarterly","Quarterly"],["yearly","Yearly"]];
 const VIEWS=[...TABS.map(t=>t[0]),"history","setup"];
-const S={tasks:[],log:[],team:[],loaded:{t:false,l:false,s:false},canWrite:true,uid:null,open:null,confirm:null,filter:null,tab:"today",hist:"",db:null,resets:{},rulesRaw:{},clinic:null,canKnown:false,older:[],olderDone:false,dl:null,imp:null,impRemove:false,impBusy:false};
+const S={tasks:[],log:[],team:[],loaded:{t:false,l:false,s:false},canWrite:true,uid:null,open:null,confirm:null,filter:null,tab:"today",hist:"",db:null,resets:{},rulesRaw:{},clinic:null,clearing:false,canKnown:false,older:[],olderDone:false,dl:null,imp:null,impRemove:false,impBusy:false};
 
 /* ---------- dates ---------- */
 const pad=n=>String(n).padStart(2,"0");
@@ -643,7 +650,15 @@ function backupHTML(){const p=S.imp;let prev="";
       <div class="toolbar">${S.dl?'<button class="btn" data-expbackup>Full backup (.json)</button><button class="btn" data-exptasks>Task list (.csv)</button>':`<span class="note">Downloads aren't available in this view.</span>`}</div></div>
     <div class="io"><strong>Import</strong><p class="note">Choose a full backup (.json) to restore it, or a task list (.csv) with Task, Frequency and Status columns to add or update tasks. You'll see what will change before anything is saved.</p>
       <div class="toolbar"><input type="file" id="impfile" class="vh" accept=".json,.csv,application/json,text/csv"><label class="btn" for="impfile">Choose file…</label></div>${prev}</div>
-  </div></div>`}
+    <div class="io"><strong>Clear all tasks</strong><p class="note">Deletes every task in every section so you can start fresh or import a different list. The completion log, team initials and schedule settings stay. Export a full backup first if you might want the tasks back.</p>
+      <div class="toolbar"><button class="btn danger" data-ask="clearall" ${S.tasks.length?"":"disabled"}>Clear all tasks…</button></div></div>
+  </div></div>${S.confirm==="clearall"?clearDialogHTML():""}`}
+function clearDialogHTML(){const n=S.tasks.length;
+  return `<div class="modal" role="presentation"><div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="clrT" aria-describedby="clrD"><h3 id="clrT">Delete all ${n} task${n===1?"":"s"}?</h3><p id="clrD">Every task in Daily, Weekly, Monthly, Quarterly and Yearly will be removed, including tasks that are switched off. This can't be undone. The completion log, team initials and schedule settings are kept.</p><div class="toolbar dlg-actions"><button class="btn ghost" data-cancel id="clrNo">Cancel</button><button class="btn danger solid" data-clearall ${S.clearing?"disabled":""}>${S.clearing?"Deleting…":"Yes, delete all tasks"}</button></div></div></div>`}
+async function clearAllTasks(){if(S.clearing)return;S.clearing=true;render();const ids=S.tasks.map(t=>t.id);
+  try{if(window.TDC&&TDC.batch)await TDC.batch(ids.map(id=>({op:"delete",col:"tasks",id})));else for(const id of ids)await S.db.doc("tasks/"+id).delete();
+    S.confirm=null;toast(`Deleted ${ids.length} task${ids.length===1?"":"s"}. The completion log is unchanged.`)}
+  catch(e){writeFail(e)}finally{S.clearing=false;render()}}
 
 /* ---------- render ---------- */
 const check='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
@@ -773,7 +788,7 @@ function render(){
   const active=document.activeElement; const fid=active&&active.id; let sel=null;try{sel=fid?active.selectionStart:null}catch(e){}
   const keep={};document.querySelectorAll("#view input[id]:not([type=file]),#view select[id]").forEach(el=>{keep[el.id]=el.value});
   let h="";
-  if(!S.tasks.length&&S.tab!=="setup")h=`<div class="empty"><strong>No tasks yet</strong>Add your checklist under Setup.</div>`;
+  if(!S.tasks.length&&S.tab!=="setup"&&S.tab!=="history")h=`<div class="empty"><strong>No tasks yet</strong>Add your checklist under Setup, or import one under Setup → Import & export.</div>`;
   else if(S.tab==="today")h=viewToday();
   else if(S.tab==="history")h=viewHistory();
   else if(S.tab==="setup")h=viewSetup();
@@ -799,7 +814,8 @@ document.addEventListener("click",async ev=>{
   if(b.classList.contains("tile")){S.tab="today";S.open=null;S.confirm=null;S.filter=b.dataset.k==="all"?null:(S.filter===b.dataset.k?null:b.dataset.k);render();return}
   if("clear" in b.dataset){S.filter=null;render();return}
   if(b.dataset.open){S.open=S.open===b.dataset.open?null:b.dataset.open;render();const f=document.querySelector(`[data-log="${S.open}"] input[type=text],[data-log="${S.open}"] .grow input`);if(f)f.focus();return}
-  if(b.dataset.ask){S.confirm=b.dataset.ask;render();return}
+  if("clearall" in b.dataset){clearAllTasks();return}
+  if(b.dataset.ask){S.confirm=b.dataset.ask;render();if(b.dataset.ask==="clearall"){const n=document.getElementById("clrNo");if(n)n.focus()}return}
   if("cancel" in b.dataset){S.confirm=null;render();return}
   if("ruledef" in b.dataset){try{await S.db.doc("settings/rules").set({});toast("Default schedule rules restored.")}catch(e){writeFail(e)}return}
   if("exportlog" in b.dataset){exportLog(S.hist.trim().toLowerCase());return}
@@ -845,6 +861,7 @@ document.addEventListener("change",async ev=>{
     else{const nl=el.value.toLowerCase();await S.db.doc("tasks/"+t.id).update({freq:el.value,list:nl,...(t.list==="optional"?{fromOptional:true}:{})});toast(nl!==t.list?`Moved to ${el.value}.`:"Frequency saved.")}}catch(e){writeFail(e)}}
 });
 document.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target.matches&&ev.target.matches("textarea.nm")){ev.preventDefault();ev.target.blur()}});
+document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&S.confirm==="clearall"&&!S.clearing){S.confirm=null;render()}});
 document.addEventListener("input",ev=>{if(ev.target.matches&&ev.target.matches("textarea.nm"))fitTa(ev.target);if(ev.target.id==="hq"){S.hist=ev.target.value;render()}});
 
 /* ---------- boot ---------- */
