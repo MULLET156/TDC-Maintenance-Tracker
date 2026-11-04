@@ -7,6 +7,7 @@
 <title>TDC Maintenance Tracker</title>
 <meta name="description" content="Toledo Dental Care maintenance checklists and completion log.">
 <meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230E6B73%27/%3E%3Cpath d=%27M9 16.5l4.5 4.5L23 11%27 fill=%27none%27 stroke=%27white%27 stroke-width=%273.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -14,9 +15,9 @@
 /* Layout: one working column; status band on top, tabbed checklists below, each task an indicator-strip row */
 :root{
   --bg:#F3F7F7; --surface:#FFFFFF; --sunk:#E8EFEF; --line:#D3DEDE;
-  --ink:#122A2E; --muted:#5A7175; --accent:#0E6B73; --accent-ink:#FFFFFF; --accent-soft:#DCEFEF;
-  --over:#C2362F; --over-soft:#FBE6E4; --soon:#B9770E; --soon-soft:#FBF0D9;
-  --ok:#2E7D4F; --ok-soft:#E1F2E7; --new:#6B7F84; --new-soft:#E9EEEF;
+  --ink:#122A2E; --muted:#55686C; --accent:#0E6B73; --accent-ink:#FFFFFF; --accent-soft:#DCEFEF;
+  --over:#B3302A; --over-soft:#FBE6E4; --soon:#946000; --soon-soft:#FBF0D9;
+  --ok:#27704A; --ok-soft:#E1F2E7; --new:#56696E; --new-soft:#E9EEEF;
   --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
   --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -26,12 +27,12 @@
   --bg:#0D1A1C; --surface:#152629; --sunk:#1B3034; --line:#2A4246;
   --ink:#E4EFEF; --muted:#93AAAE; --accent:#4FB7BF; --accent-ink:#06191B; --accent-soft:#173B3F;
   --over:#F07D74; --over-soft:#3A1D1B; --soon:#E8B04F; --soon-soft:#352A14;
-  --ok:#6BC891; --ok-soft:#16301F; --new:#90A3A7; --new-soft:#1E2E31; color-scheme:dark}}
+  --ok:#6BC891; --ok-soft:#16301F; --new:#90A3A7; --new-soft:#1E2E31; --scrim:rgba(0,0,0,.65); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0D1A1C; --surface:#152629; --sunk:#1B3034; --line:#2A4246;
   --ink:#E4EFEF; --muted:#93AAAE; --accent:#4FB7BF; --accent-ink:#06191B; --accent-soft:#173B3F;
   --over:#F07D74; --over-soft:#3A1D1B; --soon:#E8B04F; --soon-soft:#352A14;
-  --ok:#6BC891; --ok-soft:#16301F; --new:#90A3A7; --new-soft:#1E2E31; color-scheme:dark}
+  --ok:#6BC891; --ok-soft:#16301F; --new:#90A3A7; --new-soft:#1E2E31; --scrim:rgba(0,0,0,.65); color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
 .wrap{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 64px;display:flex;flex-direction:column;gap:18px}
@@ -175,7 +176,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-
 .chip button:hover{background:var(--surface);color:var(--over)}
 .addline{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;padding:12px;border-top:1px solid var(--line);background:var(--sunk)}
 .note{font-size:13px;color:var(--muted)}
-.modal{position:fixed;inset:0;z-index:40;background:rgba(8,20,22,.45);display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
+.modal{position:fixed;inset:0;z-index:40;background:var(--scrim,rgba(8,20,22,.45));display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px))}
 .dlg{width:min(420px,100%);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-top:4px solid var(--over);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:10px;box-shadow:0 18px 48px rgba(0,0,0,.3)}
 .dlg h3{margin:0;font-family:var(--f-display);font-stretch:85%;font-weight:800;font-size:21px}
 .dlg p{margin:0;font-size:14px;color:var(--muted)}
@@ -466,7 +467,8 @@ const mdParts=md=>md.split("-").map(Number);
 function mdRaw(y,md){const [m,d]=mdParts(md);return new Date(y,m-1,Math.min(d,new Date(y,m,0).getDate()))}
 function mdOpen(y,md){const x=mdRaw(y,md);for(let i=0;i<7&&!isOpen(x);i++)x.setDate(x.getDate()-1);return x}
 const mdText=md=>{const [m,d]=mdParts(md);return MONN[m-1]+" "+d};
-function nextYearly(last,rule,md){let best=null;for(let y=last.getFullYear()-1;y<=last.getFullYear()+1;y++){const c=mdRaw(y,md);if(!best||Math.abs(c-last)<Math.abs(best-last))best=c}
+function nextYearly(last,rule,md){const L=parse(iso(last));let up=null;for(let y=L.getFullYear()-1;y<=L.getFullYear()+1&&!up;y++){const c=mdRaw(y,md);if(c>=L)up=c}
+  const best=dayDiff(L,up)<=120?up:mdRaw(up.getFullYear()-1,md);
   const months=rule.m||Math.round((rule.d||365)/30.4),yrs=Math.max(1,Math.round(months/12));return mdOpen(best.getFullYear()+yrs,md)}
 const DUEBY_OK=v=>{const s=String(v||"").trim().toLowerCase();if(!s||/^(none|no|any|-)$/.test(s))return null;let m=0,d=0,x;
   if((x=s.match(/^([a-z]{3})[a-z]*\.?\s+(\d{1,2})$/))){m=MONN.findIndex(n=>n.toLowerCase()===x[1])+1;d=+x[2]}
@@ -488,9 +490,13 @@ function calStatus(t,last,P){const now=new Date(),cur=perStart(now,P),nxt=new Da
   const e=lastOpen(new Date(nxt.getFullYear(),nxt.getMonth(),0)),diff=dayDiff(now,e);
   if(diff<=(RULE[t.freq].soon||0))return{s:"soon",label:diff<=0?"Due today":"Due soon",last,next:iso(e),nextLbl:"Due by",diff};
   return{s:"new",label:"Due this "+unit,last,next:iso(e),nextLbl:"Due by",diff}}
-const DAYS_OK=v=>{const s=String(v||"").trim().toLowerCase();if(!s||/^(every|all|daily|any)/.test(s))return null;const out=new Set();
-  for(const w of s.split(/[^a-z]+/))if(w.length>=2){const i=DAYN.findIndex(n=>n.toLowerCase().startsWith(w.slice(0,3)));if(i>=0)out.add(i)}
-  return out.size?[...out].sort((a,b)=>a-b):null};
+const DAYS_OK=v=>{const s=String(v||"").trim().toLowerCase();if(!s||/^(every|all|daily|any)\b/.test(s))return null;
+  if(/^week ?days?$/.test(s))return [1,2,3,4,5];if(/^week ?ends?$/.test(s))return [0,6];
+  const di=w=>w.length>=2?DAYN.findIndex(n=>n.toLowerCase().startsWith(w.slice(0,3))):-1,out=new Set();
+  for(const part of s.split(/[,;/&+·]+|\s+and\s+/)){const rg=part.trim().match(/^([a-z]+)\s*(?:-|–|to|through|thru)\s*([a-z]+)$/);
+    if(rg){const a=di(rg[1]),b=di(rg[2]);if(a<0||b<0)return undefined;for(let d=a;;d=(d+1)%7){out.add(d);if(d===b)break}continue}
+    for(const w of part.trim().split(/\s+/))if(w){const i=di(w);if(i<0)return undefined;out.add(i)}}
+  return out.size?[...out].sort((a,b)=>a-b):undefined};
 const logName=e=>e.taskId?((S.tasks.find(t=>t.id===e.taskId)||{}).name||"Removed task"):`All ${e.scope} tasks`;
 const allLog=()=>{const m=new Map();for(const e of [...S.older,...S.log])m.set(e.id,e);return [...m.values()]};
 const fmt=s=>{if(!s)return"";return parse(s).toLocaleDateString(undefined,{month:"short",day:"numeric"})};
@@ -628,8 +634,7 @@ async function loadOlder(){let oldest=null;for(const e of allLog())if(e.at&&(!ol
 async function fetchAllLog(){let out=[],cur=null;for(let i=0;i<50;i++){let q=S.db.collection("log");if(cur)q=q.where("at","<",cur);const s=await q.orderBy("at","desc").limit(1000).get();out=out.concat(s.docs.map(d=>({id:d.id,...d.data()})));if(s.size<1000)break;cur=s.docs[s.docs.length-1].data().at}return out}
 async function exportLog(q){if(!S.dl){toast("Downloads aren't available here.");return}
   try{toast("Preparing the export…");let rows=await fetchAllLog();if(q)rows=rows.filter(e=>(logName(e)+" "+e.initials+" "+(e.note||"")).toLowerCase().includes(q));if(!rows.length){toast("No entries match that search.");return}rows.sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.at||"").localeCompare(b.at||""));
-    const q=v=>{let t=String(v??"");if(/^[=+\-@]/.test(t))t="'"+t;return `"${t.replace(/"/g,'""')}"`};
-    const lines=[["Date","Task","Initials","Note","Logged at"].map(q).join(",")].concat(rows.map(e=>[e.date,logName(e),e.initials,e.note||"",e.at||""].map(q).join(",")));
+    const lines=[["Date","Task","Initials","Note","Logged at"].map(csvCell).join(",")].concat(rows.map(e=>[e.date,logName(e),e.initials,e.note||"",e.at||""].map(csvCell).join(",")));
     await S.dl.save({filename:`TDC maintenance log${q?" - "+q.replace(/[^\w ]+/g,"").trim().slice(0,40):""} ${todayISO()}.csv`,data:lines.join("\r\n")});toast(`Exported ${rows.length} entr${rows.length===1?"y":"ies"}${q?" matching \u201c"+q+"\u201d":""}.`)}
   catch(e){if(e&&e.code==="declined")return;toast("The export didn't finish. Try again.")}}
 async function clearOld(months){const c=new Date();c.setMonth(c.getMonth()-months);const cut=c.toISOString();let n=0;
@@ -770,7 +775,7 @@ function actHTML(t,open){
 }
 function swCell(t){
   const on=!t.off&&t.freq!=="Optional";
-  return `<label class="sw" title="${on?"Turn off to stop tracking":"Turn on to track on a schedule"}"><input type="checkbox" id="sw-${t.id}" data-enable="${t.id}" ${on?"checked":""}><span>${on?"On":"Off"}</span></label>`;
+  return `<label class="sw" title="${on?"Turn off to stop tracking":"Turn on to track on a schedule"}"><input type="checkbox" id="sw-${t.id}" data-enable="${t.id}" aria-label="Track ${esc(t.name)}" ${on?"checked":""}><span>${on?"On":"Off"}</span></label>`;
 }
 function rowHTML(t){
   const st=statusOf(t), open=S.open===t.id, last=st.last;
@@ -779,7 +784,7 @@ function rowHTML(t){
   if(ownWday(t)!=null)bits.push(`<span>${DAYF[t.wday]}s</span>`);
   if(hasOwnDays(t))bits.push(`<span>${daysText(taskDays(t)," · ")}</span>`);
   if(last)bits.push(`<span>Last <span class="mono">${fmt(last.date)}</span> · ${esc(last.initials||"")}</span>`);
-  if(st.next)bits.push(`<span>${st.nextLbl||"Next"} <span class="mono">${fmt(st.next)}</span></span>`);
+  if(st.next)bits.push(`<span>${st.nextLbl||(st.s==="over"?"Was due":"Next")} <span class="mono">${fmt(st.next)}</span></span>`);
   return `<div class="row" data-s="${st.s}">
     <div class="strip ${st.s==="new"||st.s==="opt"?"hatch":""}"></div>
     <div class="main"><div class="name">${esc(t.name)}</div><div class="meta">${bits.join("")}</div>${last&&last.note?`<div class="lastnote">“${esc(last.note)}”</div>`:""}${subsRowHTML(t,st)}</div>
@@ -842,18 +847,21 @@ function wdayRowHTML(t){const od=WEEK.filter(d=>openDays().includes(d)),sel=ownW
   return `<div class="tdays" role="radiogroup" aria-label="Day of the week for ${esc(t.name)}"><span class="tdl">Day</span>${chip(null,"Any day")}${od.map(d=>chip(d,DAYN[d])).join("")}${wdayLost(t)?`<span class="note warn">This task was set to ${DAYF[t.wday]}, which isn't a clinic day anymore, so it can be done any day for now. Pick its day again.</span>`:""}${subBtnHTML(t)}</div>`}
 function duebyRowHTML(t){const md=ownDueBy(t),[m,d]=md?mdParts(md):[0,0],dim=m?new Date(2024,m,0).getDate():31;
   return `<div class="tdays"><label class="tdl" for="dbm-${t.id}">Due by</label><select class="dbsel" id="dbm-${t.id}" data-dbm="${t.id}" aria-label="Due by month for ${esc(t.name)}"><option value="">No set date</option>${MONN.map((n,i)=>`<option value="${i+1}" ${m===i+1?"selected":""}>${n}</option>`).join("")}</select>${m?`<select class="dbsel" id="dbd-${t.id}" data-dbd="${t.id}" aria-label="Due by day for ${esc(t.name)}">${Array.from({length:dim},(_,i)=>`<option ${d===i+1?"selected":""}>${i+1}</option>`).join("")}</select><span class="note">each year</span>`:""}${subBtnHTML(t)}</div>`}
-/* ---------- subtasks: an optional checklist on a task (task.subs). Ticks live in task.checks and only count
-   until the task is next logged (checks.base = that log), and for daily tasks only on the day they were made.
+/* ---------- subtasks: an optional checklist on a task (task.subs). Each tick is its own field (task["ck_"+subId] =
+   {by, base, day}) so two people ticking at once don't overwrite each other. A tick only counts until the task is
+   next logged or reset (base), and for daily tasks only on the day it was made.
    Ticking the last one logs the task as done. ---------- */
-const subsOf=t=>Array.isArray(t.subs)?t.subs.filter(x=>x&&x.id&&x.name):[];
-const subBase=t=>{const l=lastFor(t);return l?(l.at||l.date||"x"):""};
-function liveChecks(t){const c=t.checks;if(!c||typeof c!=="object"||!c.done||c.base!==subBase(t))return {};if(t.freq==="Daily"&&c.day!==todayISO())return {};
-  const ids=new Set(subsOf(t).map(x=>x.id)),o={};for(const k in c.done)if(ids.has(k))o[k]=c.done[k];return o}
+const SUB_ID=/^[A-Za-z0-9_-]{1,40}$/;
+const subsOf=t=>Array.isArray(t.subs)?t.subs.filter(x=>x&&typeof x.id==="string"&&SUB_ID.test(x.id)&&typeof x.name==="string"&&x.name.trim()):[];
+const subBase=t=>{const l=lastFor(t);return l?(l.at||l.date||"x"):"r"+(S.resets[t.list]||"")};
+function liveChecks(t){const base=subBase(t),o={};
+  for(const x of subsOf(t)){const c=t["ck_"+x.id];if(c&&typeof c==="object"&&c.base===base&&(t.freq!=="Daily"||c.day===todayISO())&&typeof c.by==="string")o[x.id]=c.by}
+  return o}
 function subBtnHTML(t){const n=subsOf(t).length,open=S.subEdit===t.id;
   return `<button class="btn ghost subbtn" type="button" data-subedit="${t.id}" aria-expanded="${open}">${open?"Close subtasks":n?`Subtasks (${n})`:"+ Subtasks"}</button>`}
 function subEditHTML(t){const subs=subsOf(t);
   return `<div class="subed"><div class="note">Each subtask gets its own checkbox on the task. The task is logged as done once every box is checked.</div>
-    <div class="subchips">${subs.map(x=>`<span class="chip">${esc(x.name)}<button type="button" data-rmsub="${t.id}|${x.id}" aria-label="Remove ${esc(x.name)}">×</button></span>`).join("")||'<span class="note">No subtasks yet.</span>'}</div>
+    <div class="subchips">${subs.map(x=>`<span class="chip">${esc(x.name)}<button type="button" data-rmsub="${esc(t.id)}|${esc(x.id)}" aria-label="Remove ${esc(x.name)}">×</button></span>`).join("")||'<span class="note">No subtasks yet.</span>'}</div>
     <form class="subadd" data-addsub="${t.id}"><div class="field grow"><label for="ns-${t.id}">New subtask</label><input id="ns-${t.id}" maxlength="60" placeholder="e.g. Op 1" required></div><button class="btn primary" type="submit">Add</button></form></div>`}
 function schedRowHTML(t){
   const row=t.freq==="Daily"?daysRowHTML(t):t.freq==="Weekly"?wdayRowHTML(t):t.freq==="Yearly"?duebyRowHTML(t):`<div class="tdays">${subBtnHTML(t)}</div>`;
@@ -861,9 +869,9 @@ function schedRowHTML(t){
 function subsRowHTML(t,st){const subs=subsOf(t);if(!subs.length||st.s==="opt")return "";
   const ch=liveChecks(t),n=subs.filter(x=>ch[x.id]).length;
   if(st.s==="ok"&&!n)return `<div class="subprog">${subs.length} subtask${subs.length===1?"":"s"}, all done</div>`;
-  return `<div class="subs" role="group" aria-label="Subtasks for ${esc(t.name)}">${subs.map(x=>`<label class="subchk"><input type="checkbox" id="sc-${t.id}-${x.id}" data-sub="${t.id}|${x.id}" ${ch[x.id]?"checked":""} ${S.canWrite?"":"disabled"}><span>${esc(x.name)}</span>${ch[x.id]?`<small>${esc(ch[x.id])}</small>`:""}</label>`).join("")}<span class="subprog">${n} of ${subs.length}</span></div>`}
+  return `<div class="subs" role="group" aria-label="Subtasks for ${esc(t.name)}">${subs.map(x=>`<label class="subchk"><input type="checkbox" id="sc-${esc(t.id)}-${esc(x.id)}" data-sub="${esc(t.id)}|${esc(x.id)}" ${ch[x.id]?"checked":""} ${S.canWrite?"":"disabled"}><span>${esc(x.name)}</span>${ch[x.id]?`<small>${esc(ch[x.id])}</small>`:""}</label>`).join("")}<span class="subprog">${n} of ${subs.length}</span></div>`}
 function clinicHTML(){const od=openDays();
-  return `<div class="section"><div class="sec-head"><h2>Clinic days</h2></div><p class="note" style="margin:0">Tasks only come due on days the clinic is open. A daily task done on your last open day of the week is next due on your first open day of the next week, and anything that would fall on a closed day moves to the next open one. Each daily task can also be limited to certain days, and each weekly task can be set to one day of the week, using the day boxes under it in the lists below. Yearly tasks can have a due-by date.</p><div class="list"><div class="chips">${[1,2,3,4,5,6,0].map(d=>`<label class="daychip"><input type="checkbox" id="cd-${d}" data-day="${d}" ${od.includes(d)?"checked":""}><span>${DAYN[d]}</span></label>`).join("")}</div></div></div>`;
+  return `<div class="section"><div class="sec-head"><h2>Clinic days</h2></div><p class="note" style="margin:0">Tasks only come due on days the clinic is open. A daily task done on your last open day of the week is next due on your first open day of the next week, and anything that would fall on a closed day moves to the next open one (a yearly due-by date moves back to the open day before it instead). Each daily task can also be limited to certain days, and each weekly task can be set to one day of the week, using the day boxes under it in the lists below. Yearly tasks can have a due-by date.</p><div class="list"><div class="chips">${[1,2,3,4,5,6,0].map(d=>`<label class="daychip"><input type="checkbox" id="cd-${d}" data-day="${d}" ${od.includes(d)?"checked":""}><span>${DAYN[d]}</span></label>`).join("")}</div></div></div>`;
 }
 const SOON_MAX={Weekly:6,Monthly:27,Quarterly:89,Yearly:364};
 const PER_TXT={Weekly:"Due every week",Monthly:"Due by the end of each month",Quarterly:"Due by the end of each quarter",Yearly:"Due once a year"};
@@ -888,9 +896,9 @@ function viewSetup(){
       ${ts.map(t=>`<div class="setup-row${t.off?" is-off":""}" data-row="${t.id}" data-list="${l.k}" data-grp="${t.off||t.freq==="Optional"?"off":"on"}">
         <button class="grip" type="button" id="gr-${t.id}" aria-label="Drag to reorder ${esc(t.name)}. Arrow keys move it up or down." title="Drag to reorder">${GRIP}</button>
         ${swCell(t)}
-        <textarea aria-label="Task name" id="nm-${t.id}" data-rename="${t.id}" rows="1" class="nm">${esc(t.name)}</textarea>
-        <select aria-label="Frequency" id="fq-${t.id}" data-freq="${t.id}">${FREQS.map(f=>`<option ${f===t.freq?"selected":""}>${f}</option>`).join("")}</select>
-        ${S.confirm==="t-"+t.id?`<span class="confirm"><button class="btn danger" data-deltask="${t.id}">Delete</button><button class="btn ghost" data-cancel>Keep</button></span>`:`<button class="btn ghost" data-ask="t-${t.id}" aria-label="Delete task">Delete</button>`}
+        <textarea aria-label="Task name: ${esc(t.name)}" id="nm-${t.id}" data-rename="${t.id}" rows="1" class="nm">${esc(t.name)}</textarea>
+        <select aria-label="Frequency for ${esc(t.name)}" id="fq-${t.id}" data-freq="${t.id}">${FREQS.map(f=>`<option ${f===t.freq?"selected":""}>${f}</option>`).join("")}</select>
+        ${S.confirm==="t-"+t.id?`<span class="confirm"><button class="btn danger" data-deltask="${t.id}">Delete</button><button class="btn ghost" data-cancel>Keep</button></span>`:`<button class="btn ghost" data-ask="t-${t.id}" aria-label="Delete ${esc(t.name)}">Delete</button>`}
         ${t.off||t.freq==="Optional"?"":schedRowHTML(t)}
       </div>`).join("")||'<div class="note" style="padding:12px">No tasks in this list.</div>'}
       <form class="addline" data-addtask="${l.k}"><div class="field grow"><label for="new-${l.k}">New ${l.label.toLowerCase()} task</label><input id="new-${l.k}" maxlength="120" required></div>
@@ -919,6 +927,7 @@ function render(){
   renderBand();
   const active=document.activeElement; const fid=active&&active.id; let sel=null;try{sel=fid?active.selectionStart:null}catch(e){}
   const keep={};document.querySelectorAll("#view input[id]:not([type=file]),#view select[id]").forEach(el=>{keep[el.id]=el.value});
+  const typing=active&&active.matches&&active.matches("textarea.nm")?{id:active.id,v:active.value}:null;
   let h="";
   if(!S.tasks.length&&S.tab!=="setup"&&S.tab!=="history")h=`<div class="empty"><strong>No tasks yet</strong>Add your checklist under Setup, or import one under Setup → Import & export.</div>`;
   else if(S.tab==="today")h=viewToday();
@@ -929,6 +938,7 @@ function render(){
   $("#view").innerHTML=h;
   document.querySelectorAll("#view textarea.nm").forEach(fitTa);
   for(const id in keep){const el=document.getElementById(id);if(el&&!el.dataset.rename&&!el.dataset.freq&&!el.dataset.dbm&&!el.dataset.dbd&&!el.dataset.sub&&!el.dataset.move&&!el.dataset.track&&id!=="hq"&&(!id.startsWith("rl-")||id===fid))el.value=keep[id]}
+  if(typing){const el=document.getElementById(typing.id);if(el&&el.value!==typing.v){el.value=typing.v;fitTa(el)}}
   if(fid){const el=document.getElementById(fid);if(el){el.focus();try{if(sel!=null)el.setSelectionRange(sel,sel)}catch(e){}}}
 }
 
@@ -989,12 +999,13 @@ document.addEventListener("change",async ev=>{
   if(el.id==="impfile"){const f=el.files&&el.files[0];el.value="";if(f)planImport(f);return}
   if(el.id==="imprm"){S.impRemove=el.checked;return}
   if(el.dataset.rename){const v=el.value.replace(/\s+/g," ").trim();if(!v)return;try{await S.db.doc("tasks/"+el.dataset.rename).update({name:v});toast("Renamed.")}catch(e){writeFail(e)}}
-  if(el.dataset.sub){const [tid,sid]=el.dataset.sub.split("|"),t=S.tasks.find(x=>x.id===tid);if(!t)return;
+  if(el.dataset.sub){const [tid,sid]=el.dataset.sub.split("|"),t=S.tasks.find(x=>x.id===tid);if(!t||!SUB_ID.test(sid||""))return;
     const me=getMe();if(!me){el.checked=!el.checked;toast("Pick your initials at the top first.");return}
-    primeAudio();const done={...liveChecks(t)};if(el.checked)done[sid]=me;else delete done[sid];
-    const checks={base:subBase(t),day:todayISO(),done};t.checks=checks;
-    const all=subsOf(t).every(x=>done[x.id]);
-    try{await S.db.doc("tasks/"+tid).update({checks});if(all)await logDone([tid],null,todayISO(),"");else render()}catch(e){writeFail(e);render()}return}
+    primeAudio();const k="ck_"+sid,v=el.checked?{by:me,base:subBase(t),day:todayISO()}:null;t[k]=v;
+    const done=liveChecks(t),subs=subsOf(t),all=subs.every(x=>done[x.id]);
+    try{await S.db.doc("tasks/"+tid).update({[k]:v});
+      if(all){await logDone([tid],null,todayISO(),"");const clr={};subs.forEach(x=>{clr["ck_"+x.id]=null;t["ck_"+x.id]=null});await S.db.doc("tasks/"+tid).update(clr);render()}else render()}
+    catch(e){writeFail(e);render()}return}
   if(el.dataset.dbm||el.dataset.dbd){const id=el.dataset.dbm||el.dataset.dbd,t=S.tasks.find(x=>x.id===id);if(!t)return;
     const m=+(document.getElementById("dbm-"+id)||{}).value||0;let v=null;
     if(m){const dEl=document.getElementById("dbd-"+id),dim=new Date(2024,m,0).getDate();const cur=ownDueBy(t);const d=Math.min(el.dataset.dbd?+dEl.value:(cur?mdParts(cur)[1]:new Date(2023,m,0).getDate()),dim);v=pad(m)+"-"+pad(d)}
@@ -1049,6 +1060,9 @@ document.addEventListener("pointerup",endDrag);document.addEventListener("pointe
 document.addEventListener("keydown",ev=>{const g=ev.target.closest&&ev.target.closest(".grip");if(!g||S.drag||(ev.key!=="ArrowUp"&&ev.key!=="ArrowDown"))return;ev.preventDefault();
   const row=g.closest(".setup-row"),rows=grpRows(row),i=rows.indexOf(row),j=ev.key==="ArrowUp"?i-1:i+1;if(j<0||j>=rows.length)return;
   if(j<i)rows[j].before(row);else rows[j].after(row);g.focus();saveOrder(row)});
+document.addEventListener("keydown",ev=>{if(ev.key!=="Tab")return;const d=document.querySelector(".modal .dlg");if(!d)return;
+  const f=[...d.querySelectorAll("button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex='-1'])")];if(!f.length)return;
+  const i=f.indexOf(document.activeElement);if(ev.shiftKey&&i<=0){ev.preventDefault();f[f.length-1].focus()}else if(!ev.shiftKey&&(i<0||i===f.length-1)){ev.preventDefault();f[0].focus()}});
 document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&(S.confirm==="clearall"||S.confirm==="resetall")&&!S.clearing){S.confirm=null;render()}});
 document.addEventListener("input",ev=>{if(ev.target.matches&&ev.target.matches("textarea.nm"))fitTa(ev.target);if(ev.target.id==="hq"){S.hist=ev.target.value;render()}});
 
