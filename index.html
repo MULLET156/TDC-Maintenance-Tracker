@@ -755,6 +755,7 @@ function viewSetup(){
   </div></div>`;
   const lists=LISTS.map(l=>{
     const ts=sorted().filter(t=>t.list===l.k); if(l.k==="optional")ts.sort(byFreq);
+    {const isOff=t=>!!t.off||t.freq==="Optional";const on=ts.filter(t=>!isOff(t)),off=ts.filter(isOff);ts.length=0;ts.push(...on,...off)}
     return `<div class="section"><div class="sec-head"><h2>${esc(l.title)}</h2></div><div class="list">
       ${ts.map(t=>`<div class="setup-row${t.off?" is-off":""}">
         ${swCell(t)}
