@@ -205,6 +205,17 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-
 .daychip.sm{padding:3px 9px;font-size:13px;gap:5px;border-radius:7px;white-space:nowrap;flex:none}
 @media (max-width:620px){.daychip.sm{padding:3px 7px;gap:4px}}
 .note.warn{color:var(--soon);flex-basis:100%;margin:2px 0 0}
+.subbtn{margin-left:auto;padding:3px 8px;font-size:13px;color:var(--accent)}
+.subed{grid-column:1/-1;background:var(--sunk);border:1px dashed var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;margin-top:2px}
+.subed .note{margin:0}
+.subchips{display:flex;flex-wrap:wrap;gap:6px}
+.subadd{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.subs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.subchk{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--line);border-radius:7px;font-size:13.5px;font-weight:600;cursor:pointer;background:var(--surface);min-height:32px}
+.subchk:has(input:checked){background:var(--ok-soft);border-color:var(--ok)}
+.subchk input{accent-color:var(--ok);margin:0;width:16px;height:16px}
+.subchk small{font-family:var(--f-mono);font-size:11px;color:var(--muted);font-weight:500}
+.subprog{font-size:12.5px;color:var(--muted)}
 @media (max-width:620px){.tdays{padding-left:0}}
 .house summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)}
 .rule-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 14px;align-items:end;padding:10px 12px;border-top:1px solid var(--line)}
@@ -646,7 +657,7 @@ async function exportBackup(){if(!S.dl){toast("Downloads aren't available here."
   catch(e){if(e&&e.code==="declined")return;toast("The backup didn't finish. Try again.")}}
 async function exportTasks(){if(!S.dl){toast("Downloads aren't available here.");return}
   const ts=S.tasks.slice().sort((a,b)=>{const fa=a.freq==="Optional"?(a.trackFreq||"Monthly"):a.freq,fb=b.freq==="Optional"?(b.trackFreq||"Monthly"):b.freq;return ((FRANK[fa]??9)-(FRANK[fb]??9))||((a.order??0)-(b.order??0))});
-  const lines=[["Task","Frequency","Status","Days","Due by"].map(csvCell).join(",")].concat(ts.map(t=>[t.name,t.freq==="Optional"?(t.trackFreq||"Monthly"):t.freq,(t.off||t.freq==="Optional")?"Off":"On",hasOwnDays(t)?daysText(taskDays(t)," "):ownWday(t)!=null?DAYN[t.wday]:"",ownDueBy(t)?mdText(t.dueBy):""].map(csvCell).join(",")));
+  const lines=[["Task","Frequency","Status","Days","Due by","Subtasks"].map(csvCell).join(",")].concat(ts.map(t=>[t.name,t.freq==="Optional"?(t.trackFreq||"Monthly"):t.freq,(t.off||t.freq==="Optional")?"Off":"On",hasOwnDays(t)?daysText(taskDays(t)," "):ownWday(t)!=null?DAYN[t.wday]:"",ownDueBy(t)?mdText(t.dueBy):"",subsOf(t).map(x=>x.name).join("; ")].map(csvCell).join(",")));
   try{await S.dl.save({filename:`TDC task list ${todayISO()}.csv`,data:lines.join("\r\n")});toast(`Exported ${ts.length} tasks.`)}
   catch(e){if(e&&e.code==="declined")return;toast("The export didn't finish. Try again.")}}
 async function planImport(file){
@@ -664,8 +675,8 @@ async function planImport(file){
   }else{
     const rows=parseCSV(text);if(!rows.length){toast("That file is empty.");return}
     const head=rows[0].map(h=>unq(h).toLowerCase());
-    let ti=head.findIndex(h=>["task","task name","name"].includes(h)),fi=head.findIndex(h=>["frequency","freq"].includes(h)),si=head.findIndex(h=>["status","on/off","on"].includes(h)),di=head.findIndex(h=>["days","day","days of week"].includes(h)),bi=head.findIndex(h=>["due by","due date","due"].includes(h));
-    let body=rows.slice(1);if(ti<0){ti=0;fi=1;si=2;di=3;bi=4;body=rows}
+    let ti=head.findIndex(h=>["task","task name","name"].includes(h)),fi=head.findIndex(h=>["frequency","freq"].includes(h)),si=head.findIndex(h=>["status","on/off","on"].includes(h)),di=head.findIndex(h=>["days","day","days of week"].includes(h)),bi=head.findIndex(h=>["due by","due date","due"].includes(h)),ui=head.findIndex(h=>["subtasks","sub-tasks","subtask"].includes(h));
+    let body=rows.slice(1);if(ti<0){ti=0;fi=1;si=2;di=3;bi=4;ui=5;body=rows}
     const byName=new Map(S.tasks.map(t=>[t.name.trim().toLowerCase(),t]));const seen=new Set();
     const items=[];let skipped=0;
     for(const r of body){const nm=unq(r[ti]).replace(/\s+/g," ").slice(0,120);if(!nm||seen.has(nm.toLowerCase()))continue;seen.add(nm.toLowerCase());
@@ -673,7 +684,8 @@ async function planImport(file){
       const st=si>=0?unq(r[si]).toLowerCase():"";const off=/^(off|no|n|false|0)$/.test(st)?true:/^(on|yes|y|true|1)$/.test(st)?false:null;
       const days=di>=0&&r.length>di?DAYS_OK(unq(r[di])):undefined;
       let dueBy=bi>=0&&r.length>bi?DUEBY_OK(unq(r[bi])):undefined;if(dueBy===undefined&&bi>=0&&r.length>bi&&!unq(r[bi]))dueBy=null;
-      const ex=byName.get(nm.toLowerCase());items.push({name:nm,freq:f||null,off,days,dueBy,ex:ex?ex.id:null})}
+      const subN=ui>=0&&r.length>ui?[...new Set(unq(r[ui]).split(/[;\n]/).map(x=>x.replace(/\s+/g," ").trim().slice(0,60)).filter(Boolean))].slice(0,30):undefined;
+      const ex=byName.get(nm.toLowerCase());items.push({name:nm,freq:f||null,off,days,dueBy,subN,ex:ex?ex.id:null})}
     if(!items.length&&!skipped){toast("No tasks found in that file. It needs a Task column.");return}
     S.imp={kind:"csv",file:name,items,newT:items.filter(i=>!i.ex).length,upd:items.filter(i=>i.ex).length,skipped};
   }
@@ -701,10 +713,11 @@ async function applyImport(){const p=S.imp;if(!p||S.impBusy)return;S.impBusy=tru
           if(it.days!==undefined){const ef=up.freq||t.freq;
             if(ef==="Weekly"){const w=it.days?it.days[0]:null;if((Number.isInteger(t.wday)?t.wday:null)!==w)up.wday=w}
             else if(JSON.stringify(t.days??null)!==JSON.stringify(it.days))up.days=it.days}
+          if(it.subN!==undefined){const cur=subsOf(t);if(cur.map(x=>x.name).join("\n")!==it.subN.join("\n"))up.subs=it.subN.map(n=>cur.find(x=>x.name===n)||{id:"s"+Math.random().toString(36).slice(2,9),name:n})}
           if(it.dueBy!==undefined&&(up.freq||t.freq)==="Yearly"&&(t.dueBy??null)!==it.dueBy)up.dueBy=it.dueBy;
           if(t.freq==="Optional"&&it.off===false&&!up.freq){const f=t.trackFreq||"Monthly";up.freq=f;up.list=f.toLowerCase()}
           if(Object.keys(up).length){await S.db.doc("tasks/"+t.id).update(up);u++}}
-        else{const f=it.freq||"Monthly";await S.db.collection("tasks").add({name:it.name,freq:f,list:f.toLowerCase(),order:++max,off:it.off===true,...(it.days?(f==="Weekly"?{wday:it.days[0]}:{days:it.days}):{}),...(it.dueBy&&f==="Yearly"?{dueBy:it.dueBy}:{})});a++}}
+        else{const f=it.freq||"Monthly";await S.db.collection("tasks").add({name:it.name,freq:f,list:f.toLowerCase(),order:++max,off:it.off===true,...(it.days?(f==="Weekly"?{wday:it.days[0]}:{days:it.days}):{}),...(it.dueBy&&f==="Yearly"?{dueBy:it.dueBy}:{}),...(it.subN&&it.subN.length?{subs:it.subN.map(n=>({id:"s"+Math.random().toString(36).slice(2,9),name:n}))}:{})});a++}}
       toast(`Added ${a} task${a===1?"":"s"} and updated ${u}.`);
     }
     S.imp=null;S.impRemove=false;
@@ -718,7 +731,7 @@ function backupHTML(){const p=S.imp;let prev="";
   return `${resetAllHTML()}<div class="section"><div class="sec-head"><h2>Import &amp; export</h2></div><div class="list">
     <div class="io"><strong>Export</strong><p class="note">A full backup saves every task, setting and completion log entry in one file you can restore later. The task list is a spreadsheet you can edit in Excel or Google Sheets and import back.</p>
       <div class="toolbar">${S.dl?'<button class="btn" data-expbackup>Full backup (.json)</button><button class="btn" data-exptasks>Task list (.csv)</button>':`<span class="note">Downloads aren't available in this view.</span>`}</div></div>
-    <div class="io"><strong>Import</strong><p class="note">Choose a full backup (.json) to restore it, or a task list (.csv) with Task, Frequency, Status and (optionally) Days and Due by columns to add or update tasks. You'll see what will change before anything is saved.</p>
+    <div class="io"><strong>Import</strong><p class="note">Choose a full backup (.json) to restore it, or a task list (.csv) with Task, Frequency, Status and (optionally) Days, Due by and Subtasks columns to add or update tasks. You'll see what will change before anything is saved.</p>
       <div class="toolbar"><input type="file" id="impfile" class="vh" accept=".json,.csv,application/json,text/csv"><label class="btn" for="impfile">Choose file…</label></div>${prev}</div>
   </div></div>${S.confirm==="clearall"?clearDialogHTML():""}${S.confirm==="resetall"?resetDialogHTML():""}`}
 function doneCount(){return S.tasks.filter(t=>!t.off&&t.freq!=="Optional"&&!["new","opt"].includes(statusOf(t).s)).length}
@@ -769,7 +782,7 @@ function rowHTML(t){
   if(st.next)bits.push(`<span>${st.nextLbl||"Next"} <span class="mono">${fmt(st.next)}</span></span>`);
   return `<div class="row" data-s="${st.s}">
     <div class="strip ${st.s==="new"||st.s==="opt"?"hatch":""}"></div>
-    <div class="main"><div class="name">${esc(t.name)}</div><div class="meta">${bits.join("")}</div>${last&&last.note?`<div class="lastnote">“${esc(last.note)}”</div>`:""}</div>
+    <div class="main"><div class="name">${esc(t.name)}</div><div class="meta">${bits.join("")}</div>${last&&last.note?`<div class="lastnote">“${esc(last.note)}”</div>`:""}${subsRowHTML(t,st)}</div>
     ${actHTML(t,open)}
     ${open?panelHTML(t.id,null):""}
   </div>`;
@@ -823,12 +836,32 @@ function viewHistory(){
   </div>`).join("")}</div></div>`).join("");
 }
 function daysRowHTML(t){const od=WEEK.filter(d=>openDays().includes(d)),sel=taskDays(t);
-  return `<div class="tdays" role="group" aria-label="Days for ${esc(t.name)}"><span class="tdl">Days</span>${od.map(d=>`<label class="daychip sm"><input type="checkbox" id="td-${t.id}-${d}" data-tday="${t.id}" value="${d}" ${sel.includes(d)?"checked":""}><span>${DAYN[d]}</span></label>`).join("")}${daysLost(t)?`<span class="note warn">None of the days picked for this task are clinic days anymore, so it's due every clinic day for now. Pick its days again.</span>`:""}</div>`}
+  return `<div class="tdays" role="group" aria-label="Days for ${esc(t.name)}"><span class="tdl">Days</span>${od.map(d=>`<label class="daychip sm"><input type="checkbox" id="td-${t.id}-${d}" data-tday="${t.id}" value="${d}" ${sel.includes(d)?"checked":""}><span>${DAYN[d]}</span></label>`).join("")}${daysLost(t)?`<span class="note warn">None of the days picked for this task are clinic days anymore, so it's due every clinic day for now. Pick its days again.</span>`:""}${subBtnHTML(t)}</div>`}
 function wdayRowHTML(t){const od=WEEK.filter(d=>openDays().includes(d)),sel=ownWday(t),nm="wd-"+t.id;
   const chip=(v,lbl)=>`<label class="daychip sm"><input type="radio" name="${nm}" id="tw-${t.id}-${v===null?"x":v}" data-twday="${t.id}" value="${v===null?"":v}" ${sel===v?"checked":""}><span>${lbl}</span></label>`;
-  return `<div class="tdays" role="radiogroup" aria-label="Day of the week for ${esc(t.name)}"><span class="tdl">Day</span>${chip(null,"Any day")}${od.map(d=>chip(d,DAYN[d])).join("")}${wdayLost(t)?`<span class="note warn">This task was set to ${DAYF[t.wday]}, which isn't a clinic day anymore, so it can be done any day for now. Pick its day again.</span>`:""}</div>`}
+  return `<div class="tdays" role="radiogroup" aria-label="Day of the week for ${esc(t.name)}"><span class="tdl">Day</span>${chip(null,"Any day")}${od.map(d=>chip(d,DAYN[d])).join("")}${wdayLost(t)?`<span class="note warn">This task was set to ${DAYF[t.wday]}, which isn't a clinic day anymore, so it can be done any day for now. Pick its day again.</span>`:""}${subBtnHTML(t)}</div>`}
 function duebyRowHTML(t){const md=ownDueBy(t),[m,d]=md?mdParts(md):[0,0],dim=m?new Date(2024,m,0).getDate():31;
-  return `<div class="tdays"><label class="tdl" for="dbm-${t.id}">Due by</label><select class="dbsel" id="dbm-${t.id}" data-dbm="${t.id}" aria-label="Due by month for ${esc(t.name)}"><option value="">No set date</option>${MONN.map((n,i)=>`<option value="${i+1}" ${m===i+1?"selected":""}>${n}</option>`).join("")}</select>${m?`<select class="dbsel" id="dbd-${t.id}" data-dbd="${t.id}" aria-label="Due by day for ${esc(t.name)}">${Array.from({length:dim},(_,i)=>`<option ${d===i+1?"selected":""}>${i+1}</option>`).join("")}</select><span class="note">each year</span>`:""}</div>`}
+  return `<div class="tdays"><label class="tdl" for="dbm-${t.id}">Due by</label><select class="dbsel" id="dbm-${t.id}" data-dbm="${t.id}" aria-label="Due by month for ${esc(t.name)}"><option value="">No set date</option>${MONN.map((n,i)=>`<option value="${i+1}" ${m===i+1?"selected":""}>${n}</option>`).join("")}</select>${m?`<select class="dbsel" id="dbd-${t.id}" data-dbd="${t.id}" aria-label="Due by day for ${esc(t.name)}">${Array.from({length:dim},(_,i)=>`<option ${d===i+1?"selected":""}>${i+1}</option>`).join("")}</select><span class="note">each year</span>`:""}${subBtnHTML(t)}</div>`}
+/* ---------- subtasks: an optional checklist on a task (task.subs). Ticks live in task.checks and only count
+   until the task is next logged (checks.base = that log), and for daily tasks only on the day they were made.
+   Ticking the last one logs the task as done. ---------- */
+const subsOf=t=>Array.isArray(t.subs)?t.subs.filter(x=>x&&x.id&&x.name):[];
+const subBase=t=>{const l=lastFor(t);return l?(l.at||l.date||"x"):""};
+function liveChecks(t){const c=t.checks;if(!c||typeof c!=="object"||!c.done||c.base!==subBase(t))return {};if(t.freq==="Daily"&&c.day!==todayISO())return {};
+  const ids=new Set(subsOf(t).map(x=>x.id)),o={};for(const k in c.done)if(ids.has(k))o[k]=c.done[k];return o}
+function subBtnHTML(t){const n=subsOf(t).length,open=S.subEdit===t.id;
+  return `<button class="btn ghost subbtn" type="button" data-subedit="${t.id}" aria-expanded="${open}">${open?"Close subtasks":n?`Subtasks (${n})`:"+ Subtasks"}</button>`}
+function subEditHTML(t){const subs=subsOf(t);
+  return `<div class="subed"><div class="note">Each subtask gets its own checkbox on the task. The task is logged as done once every box is checked.</div>
+    <div class="subchips">${subs.map(x=>`<span class="chip">${esc(x.name)}<button type="button" data-rmsub="${t.id}|${x.id}" aria-label="Remove ${esc(x.name)}">×</button></span>`).join("")||'<span class="note">No subtasks yet.</span>'}</div>
+    <form class="subadd" data-addsub="${t.id}"><div class="field grow"><label for="ns-${t.id}">New subtask</label><input id="ns-${t.id}" maxlength="60" placeholder="e.g. Op 1" required></div><button class="btn primary" type="submit">Add</button></form></div>`}
+function schedRowHTML(t){
+  const row=t.freq==="Daily"?daysRowHTML(t):t.freq==="Weekly"?wdayRowHTML(t):t.freq==="Yearly"?duebyRowHTML(t):`<div class="tdays">${subBtnHTML(t)}</div>`;
+  return row+(S.subEdit===t.id?subEditHTML(t):"")}
+function subsRowHTML(t,st){const subs=subsOf(t);if(!subs.length||st.s==="opt")return "";
+  const ch=liveChecks(t),n=subs.filter(x=>ch[x.id]).length;
+  if(st.s==="ok"&&!n)return `<div class="subprog">${subs.length} subtask${subs.length===1?"":"s"}, all done</div>`;
+  return `<div class="subs" role="group" aria-label="Subtasks for ${esc(t.name)}">${subs.map(x=>`<label class="subchk"><input type="checkbox" id="sc-${t.id}-${x.id}" data-sub="${t.id}|${x.id}" ${ch[x.id]?"checked":""} ${S.canWrite?"":"disabled"}><span>${esc(x.name)}</span>${ch[x.id]?`<small>${esc(ch[x.id])}</small>`:""}</label>`).join("")}<span class="subprog">${n} of ${subs.length}</span></div>`}
 function clinicHTML(){const od=openDays();
   return `<div class="section"><div class="sec-head"><h2>Clinic days</h2></div><p class="note" style="margin:0">Tasks only come due on days the clinic is open. A daily task done on your last open day of the week is next due on your first open day of the next week, and anything that would fall on a closed day moves to the next open one. Each daily task can also be limited to certain days, and each weekly task can be set to one day of the week, using the day boxes under it in the lists below. Yearly tasks can have a due-by date.</p><div class="list"><div class="chips">${[1,2,3,4,5,6,0].map(d=>`<label class="daychip"><input type="checkbox" id="cd-${d}" data-day="${d}" ${od.includes(d)?"checked":""}><span>${DAYN[d]}</span></label>`).join("")}</div></div></div>`;
 }
@@ -858,7 +891,7 @@ function viewSetup(){
         <textarea aria-label="Task name" id="nm-${t.id}" data-rename="${t.id}" rows="1" class="nm">${esc(t.name)}</textarea>
         <select aria-label="Frequency" id="fq-${t.id}" data-freq="${t.id}">${FREQS.map(f=>`<option ${f===t.freq?"selected":""}>${f}</option>`).join("")}</select>
         ${S.confirm==="t-"+t.id?`<span class="confirm"><button class="btn danger" data-deltask="${t.id}">Delete</button><button class="btn ghost" data-cancel>Keep</button></span>`:`<button class="btn ghost" data-ask="t-${t.id}" aria-label="Delete task">Delete</button>`}
-        ${t.freq==="Daily"&&!t.off?daysRowHTML(t):""}${t.freq==="Weekly"&&!t.off?wdayRowHTML(t):""}${t.freq==="Yearly"&&!t.off?duebyRowHTML(t):""}
+        ${t.off||t.freq==="Optional"?"":schedRowHTML(t)}
       </div>`).join("")||'<div class="note" style="padding:12px">No tasks in this list.</div>'}
       <form class="addline" data-addtask="${l.k}"><div class="field grow"><label for="new-${l.k}">New ${l.label.toLowerCase()} task</label><input id="new-${l.k}" maxlength="120" required></div>
         <div class="field"><label for="newf-${l.k}">Frequency</label><select id="newf-${l.k}">${FREQS.map(f=>`<option ${f===l.label?"selected":""}>${f}</option>`).join("")}</select></div>
@@ -895,7 +928,7 @@ function render(){
   if(!getMe()&&S.canWrite&&S.tab!=="setup")h=`<div class="empty" style="text-align:left"><strong>Who's logging?</strong>Pick your initials in the top corner. This device remembers them.</div>`+h;
   $("#view").innerHTML=h;
   document.querySelectorAll("#view textarea.nm").forEach(fitTa);
-  for(const id in keep){const el=document.getElementById(id);if(el&&!el.dataset.rename&&!el.dataset.freq&&!el.dataset.dbm&&!el.dataset.dbd&&!el.dataset.move&&!el.dataset.track&&id!=="hq"&&(!id.startsWith("rl-")||id===fid))el.value=keep[id]}
+  for(const id in keep){const el=document.getElementById(id);if(el&&!el.dataset.rename&&!el.dataset.freq&&!el.dataset.dbm&&!el.dataset.dbd&&!el.dataset.sub&&!el.dataset.move&&!el.dataset.track&&id!=="hq"&&(!id.startsWith("rl-")||id===fid))el.value=keep[id]}
   if(fid){const el=document.getElementById(fid);if(el){el.focus();try{if(sel!=null)el.setSelectionRange(sel,sel)}catch(e){}}}
 }
 
@@ -924,6 +957,9 @@ document.addEventListener("click",async ev=>{
   if(b.dataset.reset){resetList(b.dataset.reset);return}
   if(b.dataset.del){removeEntry(b.dataset.del);return}
   if(b.dataset.deltask){try{await S.db.doc("tasks/"+b.dataset.deltask).delete();S.confirm=null;toast("Task deleted. Its past log entries stay in the history.")}catch(e){writeFail(e)}return}
+  if(b.dataset.subedit){S.subEdit=S.subEdit===b.dataset.subedit?null:b.dataset.subedit;render();if(S.subEdit){const i=document.getElementById("ns-"+S.subEdit);if(i)i.focus()}return}
+  if(b.dataset.rmsub){const [tid,sid]=b.dataset.rmsub.split("|"),t=S.tasks.find(x=>x.id===tid);if(!t)return;
+    try{await S.db.doc("tasks/"+tid).update({subs:subsOf(t).filter(x=>x.id!==sid)});toast("Subtask removed.")}catch(e){writeFail(e)}return}
   if(b.dataset.rmteam){const team=S.team.filter(x=>x!==b.dataset.rmteam);try{await S.db.doc("settings/team").set({initials:team})}catch(e){writeFail(e)}return}
 });
 document.addEventListener("submit",async ev=>{
@@ -939,6 +975,11 @@ document.addEventListener("submit",async ev=>{
     return;
   }
   if(f.id==="addteam"){const inp=$("#newinit");const v=inp.value.trim().toUpperCase();if(!v)return;if(S.team.includes(v)){toast(`${v} is already on the team.`);return}inp.value="";try{await S.db.doc("settings/team").set({initials:[...S.team,v]});toast(`Added ${v}.`)}catch(e){const i=$("#newinit");if(i)i.value=v;writeFail(e)}return}
+  if(f.dataset.addsub){const tid=f.dataset.addsub,t=S.tasks.find(x=>x.id===tid),i=document.getElementById("ns-"+tid);if(!t||!i)return;
+    const name=i.value.replace(/\s+/g," ").trim().slice(0,60);if(!name)return;const subs=subsOf(t);
+    if(subs.length>=30){toast("A task can have up to 30 subtasks.");return}
+    if(subs.some(x=>x.name.toLowerCase()===name.toLowerCase())){toast("That subtask is already on the list.");return}
+    i.value="";try{await S.db.doc("tasks/"+tid).update({subs:[...subs,{id:"s"+Math.random().toString(36).slice(2,9),name}]});toast("Subtask added.");const n=document.getElementById("ns-"+tid);if(n)n.focus()}catch(e){i.value=name;writeFail(e)}return}
   if(f.dataset.addtask){const k=f.dataset.addtask;const name=$("#new-"+k).value.trim();if(!name)return;const freq=$("#newf-"+k).value;$("#new-"+k).value="";
     const max=Math.max(0,...S.tasks.map(t=>t.order||0));
     try{await S.db.collection("tasks").add({name,list:freq==="Optional"?"optional":freq.toLowerCase(),freq,order:max+1});toast(`Task added to ${freq}.`)}catch(e){const i=$("#new-"+k);if(i)i.value=name;writeFail(e)}}
@@ -948,6 +989,12 @@ document.addEventListener("change",async ev=>{
   if(el.id==="impfile"){const f=el.files&&el.files[0];el.value="";if(f)planImport(f);return}
   if(el.id==="imprm"){S.impRemove=el.checked;return}
   if(el.dataset.rename){const v=el.value.replace(/\s+/g," ").trim();if(!v)return;try{await S.db.doc("tasks/"+el.dataset.rename).update({name:v});toast("Renamed.")}catch(e){writeFail(e)}}
+  if(el.dataset.sub){const [tid,sid]=el.dataset.sub.split("|"),t=S.tasks.find(x=>x.id===tid);if(!t)return;
+    const me=getMe();if(!me){el.checked=!el.checked;toast("Pick your initials at the top first.");return}
+    primeAudio();const done={...liveChecks(t)};if(el.checked)done[sid]=me;else delete done[sid];
+    const checks={base:subBase(t),day:todayISO(),done};t.checks=checks;
+    const all=subsOf(t).every(x=>done[x.id]);
+    try{await S.db.doc("tasks/"+tid).update({checks});if(all)await logDone([tid],null,todayISO(),"");else render()}catch(e){writeFail(e);render()}return}
   if(el.dataset.dbm||el.dataset.dbd){const id=el.dataset.dbm||el.dataset.dbd,t=S.tasks.find(x=>x.id===id);if(!t)return;
     const m=+(document.getElementById("dbm-"+id)||{}).value||0;let v=null;
     if(m){const dEl=document.getElementById("dbd-"+id),dim=new Date(2024,m,0).getDate();const cur=ownDueBy(t);const d=Math.min(el.dataset.dbd?+dEl.value:(cur?mdParts(cur)[1]:new Date(2023,m,0).getDate()),dim);v=pad(m)+"-"+pad(d)}
