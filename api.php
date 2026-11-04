@@ -57,23 +57,34 @@ if (!is_array($req) || !isset($req['op']) || !is_string($req['op'])) fail(400, '
 $op = $req['op'];
 
 /* ---------- database ---------- */
-try {
-    if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite') {
-        $pdo = new PDO('sqlite:' . DB_SQLITE_PATH);
-        $driver = 'sqlite';
-    } else {
-        $pdo = new PDO(
-            'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4',
-            DB_USER, DB_PASS,
-            [PDO::ATTR_EMULATE_PREPARES => false]
-        );
-        $driver = 'mysql';
+// Shared hosting limits how many database connections can be open at once, so a
+// busy moment is retried a few times before giving up.
+$pdo = null; $driver = 'mysql'; $lastErr = null;
+for ($try = 0; $try < 6 && $pdo === null; $try++) {
+    if ($try > 0) usleep(random_int(150000, 350000) * $try);
+    try {
+        if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite') {
+            $pdo = new PDO('sqlite:' . DB_SQLITE_PATH);
+            $driver = 'sqlite';
+        } else {
+            $pdo = new PDO(
+                'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4',
+                DB_USER, DB_PASS,
+                [PDO::ATTR_EMULATE_PREPARES => false]
+            );
+        }
+    } catch (Throwable $e) { $lastErr = $e; $pdo = null; }
+}
+if ($pdo === null) {
+    $msg = $lastErr ? $lastErr->getMessage() : '';
+    // 1040 too many connections / 1203 max_user_connections: busy, not misconfigured
+    if (preg_match('/\b(1040|1203)\b|max_user_connections|Too many connections/i', $msg)) {
+        fail(503, 'db_busy', 'The database is busy. Try again in a moment.');
     }
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-} catch (Throwable $e) {
     fail(500, 'db_connect', 'Could not connect to the database. Check the DB_ settings in config.php.');
 }
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
 function ensure_schema(PDO $pdo, string $driver): void {
     $cs = $driver === 'mysql' ? ' DEFAULT CHARSET=utf8mb4' : '';
@@ -202,7 +213,18 @@ function load(PDO $pdo, string $col, string $id): ?array {
     $r = $st->fetch();
     return $r ? (json_decode($r['data'], true) ?: []) : null;
 }
-function save(PDO $pdo, string $col, string $id, array $d): int {
+function save(PDO $pdo, string $col, string $id, array $d, bool $own = true): int {
+    if (!$own) {
+        $rev = bump($pdo);
+        $st = $pdo->prepare('SELECT COUNT(*) AS n FROM tdc_docs WHERE col = ? AND id = ?');
+        $st->execute([$col, $id]);
+        if ((int)$st->fetch()['n'] > 0) {
+            $pdo->prepare('UPDATE tdc_docs SET data = ?, at_key = ?, rev = ? WHERE col = ? AND id = ?')->execute([enc($d), at_key($d), $rev, $col, $id]);
+        } else {
+            $pdo->prepare('INSERT INTO tdc_docs (col, id, data, at_key, rev) VALUES (?, ?, ?, ?, ?)')->execute([$col, $id, enc($d), at_key($d), $rev]);
+        }
+        return $rev;
+    }
     $pdo->beginTransaction();
     try {
         $rev = bump($pdo);
@@ -220,41 +242,81 @@ function save(PDO $pdo, string $col, string $id, array $d): int {
     } catch (Throwable $e) { $pdo->rollBack(); throw $e; }
 }
 
+function read_get(PDO $pdo, array $r): array {
+    $col = col_ok($r['col'] ?? null); $id = id_ok($r['id'] ?? null);
+    $d = load($pdo, $col, $id);
+    return ['exists' => $d !== null, 'data' => $d === null ? null : (object)$d];
+}
+function read_query(PDO $pdo, array $r): array {
+    $col = col_ok($r['col'] ?? null);
+    $sql = 'SELECT id, data FROM tdc_docs WHERE col = ?'; $args = [$col];
+    foreach (($r['where'] ?? []) as $w) {
+        // Only the time stamp field "at" is filterable; it has its own column.
+        if (!is_array($w) || count($w) !== 3 || $w[0] !== 'at' || !is_string($w[2])) fail(400, 'invalid_argument', 'Unsupported filter.');
+        $ops = ['<' => '<', '<=' => '<=', '>' => '>', '>=' => '>=', '==' => '='];
+        if (!isset($ops[$w[1]])) fail(400, 'invalid_argument', 'Unsupported filter.');
+        $sql .= ' AND at_key IS NOT NULL AND at_key ' . $ops[$w[1]] . ' ?'; $args[] = $w[2];
+    }
+    $ob = $r['orderBy'] ?? null;
+    if ($ob !== null) {
+        if (!is_array($ob) || ($ob[0] ?? '') !== 'at') fail(400, 'invalid_argument', 'Unsupported order.');
+        $sql .= ' ORDER BY at_key ' . ((($ob[1] ?? 'asc') === 'desc') ? 'DESC' : 'ASC') . ', id';
+    } else {
+        $sql .= ' ORDER BY id';
+    }
+    $lim = max(1, min(1000, (int)($r['limit'] ?? 1000)));
+    $sql .= ' LIMIT ' . $lim;
+    $st = $pdo->prepare($sql); $st->execute($args);
+    $docs = [];
+    foreach ($st->fetchAll() as $row) $docs[] = ['id' => $row['id'], 'data' => (object)(json_decode($row['data'], true) ?: [])];
+    return ['docs' => $docs];
+}
+
 try {
     switch ($op) {
         case 'rev':
             out(200, ['ok' => true, 'rev' => current_rev($pdo)]);
 
-        case 'get': {
-            $col = col_ok($req['col'] ?? null); $id = id_ok($req['id'] ?? null);
-            $d = load($pdo, $col, $id);
-            out(200, ['ok' => true, 'exists' => $d !== null, 'data' => $d === null ? null : (object)$d, 'rev' => current_rev($pdo)]);
+        case 'get':
+            out(200, ['ok' => true] + read_get($pdo, $req) + ['rev' => current_rev($pdo)]);
+
+        case 'query':
+            out(200, ['ok' => true] + read_query($pdo, $req) + ['rev' => current_rev($pdo)]);
+
+        case 'multi': {
+            // Several reads in one request (one database connection instead of many).
+            $reads = $req['reads'] ?? null;
+            if (!is_array($reads) || count($reads) > 20) fail(400, 'invalid_argument', 'Bad read list.');
+            $res = [];
+            foreach ($reads as $r) {
+                if (!is_array($r)) fail(400, 'invalid_argument', 'Bad read.');
+                $res[] = (($r['kind'] ?? '') === 'get') ? read_get($pdo, $r) : read_query($pdo, $r);
+            }
+            out(200, ['ok' => true, 'results' => $res, 'rev' => current_rev($pdo)]);
         }
 
-        case 'query': {
-            $col = col_ok($req['col'] ?? null);
-            $sql = 'SELECT id, data FROM tdc_docs WHERE col = ?'; $args = [$col];
-            foreach (($req['where'] ?? []) as $w) {
-                // Only the time stamp field "at" is filterable; it has its own column.
-                if (!is_array($w) || count($w) !== 3 || $w[0] !== 'at' || !is_string($w[2])) fail(400, 'invalid_argument', 'Unsupported filter.');
-                $ops = ['<' => '<', '<=' => '<=', '>' => '>', '>=' => '>=', '==' => '='];
-                if (!isset($ops[$w[1]])) fail(400, 'invalid_argument', 'Unsupported filter.');
-                $sql .= ' AND at_key IS NOT NULL AND at_key ' . $ops[$w[1]] . ' ?'; $args[] = $w[2];
+        case 'batch': {
+            // Many writes in one request and one transaction (used by Import).
+            $writes = $req['writes'] ?? null;
+            if (!is_array($writes) || count($writes) === 0 || count($writes) > 200) fail(400, 'invalid_argument', 'Bad write list.');
+            $pdo->beginTransaction();
+            $rev = 0;
+            foreach ($writes as $w) {
+                if (!is_array($w)) fail(400, 'invalid_argument', 'Bad write.');
+                $col = col_ok($w['col'] ?? null); $id = id_ok($w['id'] ?? null);
+                switch ($w['op'] ?? '') {
+                    case 'set':    $rev = save($pdo, $col, $id, data_ok($w['data'] ?? null), false); break;
+                    case 'update': $cur = load($pdo, $col, $id);
+                                   if ($cur === null) break;
+                                   foreach (data_ok($w['data'] ?? null) as $k => $v) $cur[$k] = $v;
+                                   $rev = save($pdo, $col, $id, $cur, false); break;
+                    case 'delete': $rev = bump($pdo);
+                                   $pdo->prepare('DELETE FROM tdc_docs WHERE col = ? AND id = ?')->execute([$col, $id]); break;
+                    default: fail(400, 'invalid_argument', 'Bad write.');
+                }
             }
-            $ob = $req['orderBy'] ?? null;
-            if ($ob !== null) {
-                if (!is_array($ob) || ($ob[0] ?? '') !== 'at') fail(400, 'invalid_argument', 'Unsupported order.');
-                $sql .= ' ORDER BY at_key ' . ((($ob[1] ?? 'asc') === 'desc') ? 'DESC' : 'ASC') . ', id';
-            } else {
-                $sql .= ' ORDER BY id';
-            }
-            $lim = (int)($req['limit'] ?? 1000);
-            $lim = max(1, min(1000, $lim));
-            $sql .= ' LIMIT ' . $lim;
-            $st = $pdo->prepare($sql); $st->execute($args);
-            $docs = [];
-            foreach ($st->fetchAll() as $r) $docs[] = ['id' => $r['id'], 'data' => (object)(json_decode($r['data'], true) ?: [])];
-            out(200, ['ok' => true, 'docs' => $docs, 'rev' => current_rev($pdo)]);
+            $pdo->commit();
+            out(200, ['ok' => true, 'count' => count($writes), 'rev' => $rev]);
         }
 
         case 'set': {
