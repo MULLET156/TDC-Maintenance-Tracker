@@ -953,7 +953,7 @@ document.addEventListener("click",async ev=>{
   if(b.id==="themeBtn"){const next=curTheme()==="dark"?"light":"dark";try{localStorage.setItem("tdc-theme",next)}catch(e){}applyTheme();renderThemeBtn();toast(next==="dark"?"Dark mode on.":"Light mode on.");return}
   if(b.id==="snd"){const on=!soundOn();try{localStorage.setItem("tdc-sound",on?"on":"off")}catch(e){}renderSnd();if(on){primeAudio();playDone()}return}
   if(b.dataset.tab){S.tab=b.dataset.tab;S.open=null;S.confirm=null;if(b.dataset.tab!=="today")S.filter=null;try{history.replaceState(null,"","#"+b.dataset.tab)}catch(e){}render();return}
-  if(b.classList.contains("tile")){S.tab="today";S.open=null;S.confirm=null;S.filter=b.dataset.k==="all"?null:(S.filter===b.dataset.k?null:b.dataset.k);render();return}
+  if(b.classList.contains("tile")){S.tab="today";S.open=null;S.confirm=null;S.filter=b.dataset.k==="all"?null:b.dataset.k;render();return}
   if("clear" in b.dataset){S.filter=null;render();return}
   if(b.dataset.open){S.open=S.open===b.dataset.open?null:b.dataset.open;render();const f=document.querySelector(`[data-log="${S.open}"] input[type=text],[data-log="${S.open}"] .grow input`);if(f)f.focus();return}
   if("clearall" in b.dataset){clearAllTasks();return}
