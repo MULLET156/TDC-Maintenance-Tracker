@@ -650,21 +650,23 @@ function backupHTML(){const p=S.imp;let prev="";
       <div class="toolbar">${S.dl?'<button class="btn" data-expbackup>Full backup (.json)</button><button class="btn" data-exptasks>Task list (.csv)</button>':`<span class="note">Downloads aren't available in this view.</span>`}</div></div>
     <div class="io"><strong>Import</strong><p class="note">Choose a full backup (.json) to restore it, or a task list (.csv) with Task, Frequency and Status columns to add or update tasks. You'll see what will change before anything is saved.</p>
       <div class="toolbar"><input type="file" id="impfile" class="vh" accept=".json,.csv,application/json,text/csv"><label class="btn" for="impfile">Choose file…</label></div>${prev}</div>
-    <div class="io"><strong>Clear all tasks</strong><p class="note">Deletes every task in every section so you can start fresh or import a different list. The completion log, team initials and schedule settings stay. Export a full backup first if you might want the tasks back.</p>
-      <div class="toolbar"><button class="btn danger" data-ask="clearall" ${S.tasks.length?"":"disabled"}>Clear all tasks…</button></div></div>
   </div></div>${resetAllHTML()}${S.confirm==="clearall"?clearDialogHTML():""}${S.confirm==="resetall"?resetDialogHTML():""}`}
 function doneCount(){return S.tasks.filter(t=>!t.off&&t.freq!=="Optional"&&!["new","opt"].includes(statusOf(t).s)).length}
 function resetAllHTML(){const n=doneCount();
-  return `<div class="section"><div class="sec-head"><h2>Reset all tasks</h2></div><div class="list"><div class="io"><p class="note">Marks every task in every section as not done, the same as using Reset on each section. The completion log keeps its history; past entries just stop counting toward what's due.</p>
-    <div class="toolbar"><button class="btn danger" data-ask="resetall" ${n?"":"disabled"}>Reset all tasks…</button>${n?"":`<span class="note">Nothing is marked done right now.</span>`}</div></div></div></div>`}
+  return `<div class="section"><div class="sec-head"><h2>Reset &amp; delete tasks</h2></div><div class="list">
+    <div class="io"><strong>Mark all tasks not done</strong><p class="note">Every task in every section goes back to not done, the same as using Reset on each section. The completion log keeps its history; past entries just stop counting toward what's due.</p>
+      <div class="toolbar"><button class="btn danger" data-ask="resetall" ${n?"":"disabled"}>Mark all not done…</button>${n?"":`<span class="note">Nothing is marked done right now.</span>`}</div></div>
+    <div class="io"><strong>Delete all tasks</strong><p class="note">Removes every task from every section so you can start fresh or import a different list. The completion log, team initials and schedule settings stay. Export a full backup first if you might want the tasks back.</p>
+      <div class="toolbar"><button class="btn danger" data-ask="clearall" ${S.tasks.length?"":"disabled"}>Delete all tasks…</button></div></div>
+  </div></div>`}
 function resetDialogHTML(){const n=doneCount();
-  return `<div class="modal" role="presentation"><div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="rstT" aria-describedby="rstD"><h3 id="rstT">Reset all tasks?</h3><p id="rstD">${n} task${n===1?" is":"s are"} marked done right now. Every task in Daily, Weekly, Monthly, Quarterly and Yearly will go back to not done and show under Needs attention. The completion log keeps its history.</p><div class="toolbar dlg-actions"><button class="btn ghost" data-cancel id="rstNo">Cancel</button><button class="btn danger solid" data-resetall ${S.clearing?"disabled":""}>${S.clearing?"Resetting…":"Yes, reset all tasks"}</button></div></div></div>`}
+  return `<div class="modal" role="presentation"><div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="rstT" aria-describedby="rstD"><h3 id="rstT">Mark all tasks not done?</h3><p id="rstD">${n} task${n===1?" is":"s are"} marked done right now. Every task in Daily, Weekly, Monthly, Quarterly and Yearly will go back to not done and show under Needs attention. The completion log keeps its history.</p><div class="toolbar dlg-actions"><button class="btn ghost" data-cancel id="rstNo">Cancel</button><button class="btn danger solid" data-resetall ${S.clearing?"disabled":""}>${S.clearing?"Updating…":"Yes, mark all not done"}</button></div></div></div>`}
 async function resetAllTasks(){if(S.clearing)return;S.clearing=true;render();
   const now=new Date().toISOString(),rz={...S.resets};LISTS.forEach(l=>{rz[l.k]=now});
   const done=S.tasks.filter(t=>t.lastDone),n=doneCount();
   try{if(window.TDC&&TDC.batch)await TDC.batch([{op:"set",col:"settings",id:"resets",data:rz},...done.map(t=>({op:"update",col:"tasks",id:t.id,data:{lastDone:null}}))]);
     else{await S.db.doc("settings/resets").set(rz);for(const t of done)await S.db.doc("tasks/"+t.id).update({lastDone:null})}
-    S.confirm=null;toast(`Reset ${n} task${n===1?"":"s"} to not done. Past entries stay in the completion log.`)}
+    S.confirm=null;toast(`Marked ${n} task${n===1?"":"s"} not done. Past entries stay in the completion log.`)}
   catch(e){writeFail(e)}finally{S.clearing=false;render()}}
 function clearDialogHTML(){const n=S.tasks.length;
   return `<div class="modal" role="presentation"><div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="clrT" aria-describedby="clrD"><h3 id="clrT">Delete all ${n} task${n===1?"":"s"}?</h3><p id="clrD">Every task in Daily, Weekly, Monthly, Quarterly and Yearly will be removed, including tasks that are switched off. This can't be undone. The completion log, team initials and schedule settings are kept.</p><div class="toolbar dlg-actions"><button class="btn ghost" data-cancel id="clrNo">Cancel</button><button class="btn danger solid" data-clearall ${S.clearing?"disabled":""}>${S.clearing?"Deleting…":"Yes, delete all tasks"}</button></div></div></div>`}
