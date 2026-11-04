@@ -207,9 +207,10 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-
 .note.warn{color:var(--soon);flex-basis:100%;margin:2px 0 0}
 @media (max-width:620px){.tdays{padding-left:0}}
 .house summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)}
-.rule-row{display:grid;grid-template-columns:110px minmax(0,1fr) minmax(0,1fr);gap:10px 14px;align-items:end;padding:10px 12px;border-top:1px solid var(--line)}
+.rule-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 14px;align-items:end;padding:10px 12px;border-top:1px solid var(--line)}
 .rule-row:first-child{border-top:0}
-.rule-name{font-weight:600;padding-bottom:7px}
+.rule-name{font-weight:600;padding-bottom:7px;display:flex;flex-direction:column;gap:1px}
+.rule-name .note{font-weight:400;font-size:12.5px}
 .pair{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .rule-row input,.rule-row select{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 8px}
 .pair input{width:72px;font-family:var(--f-mono)}
@@ -462,9 +463,9 @@ const DUEBY_OK=v=>{const s=String(v||"").trim().toLowerCase();if(!s||/^(none|no|
   else if((x=s.match(/^(?:\d{4}-)?(\d{1,2})[\/-](\d{1,2})(?:[\/-]\d{2,4})?$/))){m=+x[1];d=+x[2]}
   if(!(m>=1&&m<=12&&d>=1&&d<=new Date(2024,m,0).getDate()))return undefined;return pad(m)+"-"+pad(d)};
 /* Monthly and quarterly tasks follow the calendar: each month (or quarter: Jan, Apr, Jul, Oct) is one
-   period. A task comes due on the first day of the period, is done for the period once it's logged in it,
-   and is overdue once a whole period passes without a log. Applies while the rule is "every N months"
-   with N dividing 12 (1 for monthly and 3 for quarterly by default). */
+   period. A task shows up (as "Due this month/quarter") on the first day of the period, turns Due soon
+   within the frequency's due soon window before the period ends, is done for the period once it's
+   logged in it, and is overdue once the period ends without a log. */
 function calMonths(t){const r=RULE[t.freq];return (t.freq==="Monthly"||t.freq==="Quarterly")&&r&&r.m&&!r.d&&12%r.m===0?r.m:0}
 const perStart=(d,P)=>new Date(d.getFullYear(),Math.floor(d.getMonth()/P)*P,1);
 function firstOpen(d){const x=new Date(d);for(let i=0;i<14&&!isOpen(x);i++)x.setDate(x.getDate()+1);return x}
@@ -474,7 +475,8 @@ function calStatus(t,last,P){const now=new Date(),cur=perStart(now,P),nxt=new Da
   if(ld>=cur){const n=firstOpen(nxt);return{s:"ok",label:"Done this "+unit,last,next:iso(n),diff:dayDiff(now,n)}}
   if(ld<prev){const e=lastOpen(new Date(cur.getFullYear(),cur.getMonth(),0));return{s:"over",label:"Overdue",last,next:iso(e),nextLbl:"Was due",diff:dayDiff(now,e)}}
   const e=lastOpen(new Date(nxt.getFullYear(),nxt.getMonth(),0)),diff=dayDiff(now,e);
-  return{s:"soon",label:diff<=0?"Due today":"Due this "+unit,last,next:iso(e),nextLbl:"Due by",diff}}
+  if(diff<=(RULE[t.freq].soon||0))return{s:"soon",label:diff<=0?"Due today":"Due soon",last,next:iso(e),nextLbl:"Due by",diff};
+  return{s:"new",label:"Due this "+unit,last,next:iso(e),nextLbl:"Due by",diff}}
 const DAYS_OK=v=>{const s=String(v||"").trim().toLowerCase();if(!s||/^(every|all|daily|any)/.test(s))return null;const out=new Set();
   for(const w of s.split(/[^a-z]+/))if(w.length>=2){const i=DAYN.findIndex(n=>n.toLowerCase().startsWith(w.slice(0,3)));if(i>=0)out.add(i)}
   return out.size?[...out].sort((a,b)=>a-b):null};
@@ -830,14 +832,14 @@ function duebyRowHTML(t){const md=ownDueBy(t),[m,d]=md?mdParts(md):[0,0],dim=m?n
 function clinicHTML(){const od=openDays();
   return `<div class="section"><div class="sec-head"><h2>Clinic days</h2></div><p class="note" style="margin:0">Tasks only come due on days the clinic is open. A daily task done on your last open day of the week is next due on your first open day of the next week, and anything that would fall on a closed day moves to the next open one. Each daily task can also be limited to certain days, and each weekly task can be set to one day of the week, using the day boxes under it in the lists below. Yearly tasks can have a due-by date.</p><div class="list"><div class="chips">${[1,2,3,4,5,6,0].map(d=>`<label class="daychip"><input type="checkbox" id="cd-${d}" data-day="${d}" ${od.includes(d)?"checked":""}><span>${DAYN[d]}</span></label>`).join("")}</div></div></div>`;
 }
+const SOON_MAX={Weekly:6,Monthly:27,Quarterly:89,Yearly:364};
+const PER_TXT={Weekly:"Due every week",Monthly:"Due by the end of each month",Quarterly:"Due by the end of each quarter",Yearly:"Due once a year"};
 function rulesHTML(){
-  const rows=Object.keys(DEF_RULE).map(f=>{const r=RULE[f];const every=r.d||r.m;const unit=r.m?"months":"days";
-    return `<div class="rule-row"><div class="rule-name">${f}</div>
-    <div class="field"><label for="rl-e-${f}">Due every</label><div class="pair"><input type="number" min="1" max="365" step="1" id="rl-e-${f}" data-rule="${f}" value="${every}"><select id="rl-u-${f}" data-rule="${f}" aria-label="${f} unit"><option value="days" ${unit==="days"?"selected":""}>days</option><option value="months" ${unit==="months"?"selected":""}>months</option></select></div></div>
-    <div class="field"><label for="rl-s-${f}">Due soon window</label><div class="pair"><input type="number" min="0" max="365" step="1" id="rl-s-${f}" data-rule="${f}" value="${r.soon}"><span class="note">days before</span></div></div></div>`}).join("");
+  const rows=Object.keys(SOON_MAX).map(f=>`<div class="rule-row"><div class="rule-name">${f}<span class="note">${PER_TXT[f]}</span></div>
+    <div class="field"><label for="rl-s-${f}">Due soon window</label><div class="pair"><input type="number" min="0" max="${SOON_MAX[f]}" step="1" id="rl-s-${f}" data-rule="${f}" value="${RULE[f].soon}"><span class="note">days before it's due</span></div></div></div>`).join("");
   const changed=Object.keys(S.rulesRaw||{}).length>0;
   return `<div class="section"><div class="sec-head"><h2>Schedule rules</h2>${changed?'<button class="btn ghost" data-ruledef>Restore defaults</button>':""}</div>
-    <p class="note" style="margin:0">How long after the last log each frequency comes due, and how many days ahead it turns Due soon (0 means only on the due date). A change applies to every task with that frequency. Monthly and quarterly tasks follow the calendar: they come due on the 1st of each month or quarter (Jan, Apr, Jul, Oct), stay due until they're logged, and turn overdue if a whole month or quarter goes by without a log, so their due soon window isn't used. Match these to your office procedures and each manufacturer's instructions.</p>
+    <p class="note" style="margin:0">How many days ahead each frequency turns Due soon (0 means only on the day it's due). Monthly and quarterly tasks show up on the 1st of each month or quarter (Jan, Apr, Jul, Oct), turn Due soon this many days before the end of it, and are overdue if the month or quarter ends without a log. Daily tasks are due each of their days. A change applies to every task with that frequency.</p>
     <div class="list">${rows}</div></div>`;
 }
 function viewSetup(){
@@ -958,10 +960,9 @@ document.addEventListener("change",async ev=>{
     const all=openDays().every(d=>days.includes(d));
     try{await S.db.doc("tasks/"+t.id).update({days:all?null:days});toast(all?`${t.name}: every clinic day.`:`${t.name}: ${daysText(days,", ")} only.`)}catch(e){el.checked=!el.checked;writeFail(e)}return}
   if(el.dataset.day!==undefined){const days=[...document.querySelectorAll("[data-day]")].filter(i=>i.checked).map(i=>+i.dataset.day);if(!days.length){el.checked=true;toast("Keep at least one clinic day.");return}try{await S.db.doc("settings/clinic").set({days});toast("Clinic days saved.")}catch(e){writeFail(e)}return}
-  if(el.dataset.rule){const f=el.dataset.rule;const every=Math.round(+$("#rl-e-"+f).value),unit=$("#rl-u-"+f).value,soon=Math.round(+$("#rl-s-"+f).value);
-    if(!(every>=1&&every<=365)||!(soon>=0&&soon<=365)){toast("Use whole numbers: due every 1 to 365, due soon 0 to 365.");return}
-    const days=unit==="months"?every*30:every; if(soon>=days){toast("The due soon window has to be shorter than the time between due dates.");return}
-    try{await S.db.doc("settings/rules").set({...S.rulesRaw,[f]:{every,unit,soon}});toast(`${f} rule saved.`)}catch(e){writeFail(e)}return}
+  if(el.dataset.rule){const f=el.dataset.rule,mx=SOON_MAX[f],raw=$("#rl-s-"+f).value,soon=+raw;
+    if(raw===""||!Number.isInteger(soon)||soon<0||soon>mx){toast(`Use a whole number from 0 to ${mx} for ${f.toLowerCase()} tasks.`);return}
+    try{await S.db.doc("settings/rules").set({...S.rulesRaw,[f]:{soon}});toast(`${f} due soon window saved.`)}catch(e){writeFail(e)}return}
   if(el.dataset.track){try{await S.db.doc("tasks/"+el.dataset.track).update({trackFreq:el.value});toast(`Will start as ${el.value} when turned on.`)}catch(e){writeFail(e)}return}
   if(el.dataset.enable){const t=S.tasks.find(x=>x.id===el.dataset.enable);if(!t)return;try{if(el.checked){const f=t.freq==="Optional"?(t.trackFreq||"Monthly"):t.freq;await S.db.doc("tasks/"+t.id).update({off:false,freq:f,list:f.toLowerCase()});toast(`${t.name} is on.`)}else{await S.db.doc("tasks/"+t.id).update({off:true});toast(`${t.name} is off.`)}}catch(e){writeFail(e)}return}
   if(el.dataset.move){try{await S.db.doc("tasks/"+el.dataset.move).update({list:el.value});toast("Moved.")}catch(e){writeFail(e)}}
@@ -1016,7 +1017,7 @@ renderSnd();render();
   db.doc("settings/team").onSnapshot(s=>{S.team=(s.exists&&s.data().initials)||[];S.loaded.s=true;renderWho();render()},()=>{S.loaded.s=true;render()});
   db.doc("settings/resets").onSnapshot(s=>{S.resets=(s.exists&&s.data())||{};render()},()=>{});
   db.doc("settings/clinic").onSnapshot(s=>{S.clinic=(s.exists&&s.data().days)||null;render()},()=>{});
-  db.doc("settings/rules").onSnapshot(s=>{const o=(s.exists&&s.data())||{};S.rulesRaw=o;const R={};for(const f in DEF_RULE){const v=o[f];R[f]=v&&v.every?(v.unit==="months"?{m:v.every,soon:v.soon||0}:{d:v.every,soon:v.soon||0}):DEF_RULE[f]}RULE=R;render()},()=>{});
+  db.doc("settings/rules").onSnapshot(s=>{const o=(s.exists&&s.data())||{};S.rulesRaw=o;const R={};for(const f in DEF_RULE){const v=o[f],mx=SOON_MAX[f]||0;R[f]={...DEF_RULE[f],soon:v&&Number.isInteger(v.soon)&&v.soon>=0?Math.min(v.soon,mx):DEF_RULE[f].soon}}RULE=R;render()},()=>{});
 })();
 /* refresh statuses when the day rolls over */
 let lastDay=todayISO();setInterval(()=>{if(todayISO()!==lastDay){lastDay=todayISO();document.querySelectorAll("#view input[type=date]").forEach(i=>{i.value=lastDay;i.max=lastDay});render()}},60000);
