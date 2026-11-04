@@ -652,7 +652,20 @@ function backupHTML(){const p=S.imp;let prev="";
       <div class="toolbar"><input type="file" id="impfile" class="vh" accept=".json,.csv,application/json,text/csv"><label class="btn" for="impfile">Choose file…</label></div>${prev}</div>
     <div class="io"><strong>Clear all tasks</strong><p class="note">Deletes every task in every section so you can start fresh or import a different list. The completion log, team initials and schedule settings stay. Export a full backup first if you might want the tasks back.</p>
       <div class="toolbar"><button class="btn danger" data-ask="clearall" ${S.tasks.length?"":"disabled"}>Clear all tasks…</button></div></div>
-  </div></div>${S.confirm==="clearall"?clearDialogHTML():""}`}
+  </div></div>${resetAllHTML()}${S.confirm==="clearall"?clearDialogHTML():""}${S.confirm==="resetall"?resetDialogHTML():""}`}
+function doneCount(){return S.tasks.filter(t=>!t.off&&t.freq!=="Optional"&&!["new","opt"].includes(statusOf(t).s)).length}
+function resetAllHTML(){const n=doneCount();
+  return `<div class="section"><div class="sec-head"><h2>Reset all tasks</h2></div><div class="list"><div class="io"><p class="note">Marks every task in every section as not done, the same as using Reset on each section. The completion log keeps its history; past entries just stop counting toward what's due.</p>
+    <div class="toolbar"><button class="btn danger" data-ask="resetall" ${n?"":"disabled"}>Reset all tasks…</button>${n?"":`<span class="note">Nothing is marked done right now.</span>`}</div></div></div></div>`}
+function resetDialogHTML(){const n=doneCount();
+  return `<div class="modal" role="presentation"><div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="rstT" aria-describedby="rstD"><h3 id="rstT">Reset all tasks?</h3><p id="rstD">${n} task${n===1?" is":"s are"} marked done right now. Every task in Daily, Weekly, Monthly, Quarterly and Yearly will go back to not done and show under Needs attention. The completion log keeps its history.</p><div class="toolbar dlg-actions"><button class="btn ghost" data-cancel id="rstNo">Cancel</button><button class="btn danger solid" data-resetall ${S.clearing?"disabled":""}>${S.clearing?"Resetting…":"Yes, reset all tasks"}</button></div></div></div>`}
+async function resetAllTasks(){if(S.clearing)return;S.clearing=true;render();
+  const now=new Date().toISOString(),rz={...S.resets};LISTS.forEach(l=>{rz[l.k]=now});
+  const done=S.tasks.filter(t=>t.lastDone),n=doneCount();
+  try{if(window.TDC&&TDC.batch)await TDC.batch([{op:"set",col:"settings",id:"resets",data:rz},...done.map(t=>({op:"update",col:"tasks",id:t.id,data:{lastDone:null}}))]);
+    else{await S.db.doc("settings/resets").set(rz);for(const t of done)await S.db.doc("tasks/"+t.id).update({lastDone:null})}
+    S.confirm=null;toast(`Reset ${n} task${n===1?"":"s"} to not done. Past entries stay in the completion log.`)}
+  catch(e){writeFail(e)}finally{S.clearing=false;render()}}
 function clearDialogHTML(){const n=S.tasks.length;
   return `<div class="modal" role="presentation"><div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="clrT" aria-describedby="clrD"><h3 id="clrT">Delete all ${n} task${n===1?"":"s"}?</h3><p id="clrD">Every task in Daily, Weekly, Monthly, Quarterly and Yearly will be removed, including tasks that are switched off. This can't be undone. The completion log, team initials and schedule settings are kept.</p><div class="toolbar dlg-actions"><button class="btn ghost" data-cancel id="clrNo">Cancel</button><button class="btn danger solid" data-clearall ${S.clearing?"disabled":""}>${S.clearing?"Deleting…":"Yes, delete all tasks"}</button></div></div></div>`}
 async function clearAllTasks(){if(S.clearing)return;S.clearing=true;render();const ids=S.tasks.map(t=>t.id);
@@ -816,7 +829,8 @@ document.addEventListener("click",async ev=>{
   if("clear" in b.dataset){S.filter=null;render();return}
   if(b.dataset.open){S.open=S.open===b.dataset.open?null:b.dataset.open;render();const f=document.querySelector(`[data-log="${S.open}"] input[type=text],[data-log="${S.open}"] .grow input`);if(f)f.focus();return}
   if("clearall" in b.dataset){clearAllTasks();return}
-  if(b.dataset.ask){S.confirm=b.dataset.ask;render();if(b.dataset.ask==="clearall"){const n=document.getElementById("clrNo");if(n)n.focus()}return}
+  if("resetall" in b.dataset){resetAllTasks();return}
+  if(b.dataset.ask){S.confirm=b.dataset.ask;render();{const n=document.getElementById(b.dataset.ask==="clearall"?"clrNo":"rstNo");if(n&&(b.dataset.ask==="clearall"||b.dataset.ask==="resetall"))n.focus()}return}
   if("cancel" in b.dataset){S.confirm=null;render();return}
   if("ruledef" in b.dataset){try{await S.db.doc("settings/rules").set({});toast("Default schedule rules restored.")}catch(e){writeFail(e)}return}
   if("exportlog" in b.dataset){exportLog(S.hist.trim().toLowerCase());return}
@@ -862,7 +876,7 @@ document.addEventListener("change",async ev=>{
     else{const nl=el.value.toLowerCase();await S.db.doc("tasks/"+t.id).update({freq:el.value,list:nl,...(t.list==="optional"?{fromOptional:true}:{})});toast(nl!==t.list?`Moved to ${el.value}.`:"Frequency saved.")}}catch(e){writeFail(e)}}
 });
 document.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target.matches&&ev.target.matches("textarea.nm")){ev.preventDefault();ev.target.blur()}});
-document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&S.confirm==="clearall"&&!S.clearing){S.confirm=null;render()}});
+document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&(S.confirm==="clearall"||S.confirm==="resetall")&&!S.clearing){S.confirm=null;render()}});
 document.addEventListener("input",ev=>{if(ev.target.matches&&ev.target.matches("textarea.nm"))fitTa(ev.target);if(ev.target.id==="hq"){S.hist=ev.target.value;render()}});
 
 /* ---------- boot ---------- */
