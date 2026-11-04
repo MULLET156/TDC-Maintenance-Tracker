@@ -156,13 +156,19 @@ nav.tabs button[data-tab="today"][aria-selected=true]{background:var(--accent);c
 .hrow .grp{font-size:11px;font-family:var(--f-display);font-stretch:85%;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent)}
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
 
-.setup-row{display:grid;grid-template-columns:auto minmax(0,1fr) 130px auto;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid var(--line)}
+.setup-row{display:grid;grid-template-columns:auto auto minmax(0,1fr) 130px auto;gap:8px;align-items:center;padding:8px 10px;border-top:1px solid var(--line)}
 .setup-row:first-child{border-top:0}
 .setup-row input,.setup-row select{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 8px;min-width:0;width:100%}
 .setup-row .sw input{border:0;padding:0}
 .setup-row textarea.nm{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 8px;min-width:0;width:100%;resize:none;overflow:hidden;font:inherit;line-height:1.35;display:block}
 .setup-row.is-off [data-rename],.setup-row.is-off select{color:var(--muted)}
-@media (max-width:620px){.setup-row{grid-template-columns:auto minmax(0,1fr) auto}.setup-row [data-rename]{grid-column:2/-1}.setup-row select[data-freq]{grid-column:1/3}}
+@media (max-width:620px){.setup-row{grid-template-columns:auto auto minmax(0,1fr) auto}.setup-row [data-rename]{grid-column:3/-1}.setup-row select[data-freq]{grid-column:1/4}}
+.grip{all:unset;box-sizing:border-box;cursor:grab;touch-action:none;display:grid;place-items:center;width:30px;height:36px;margin:-2px -4px -2px -6px;border-radius:6px;color:var(--muted)}
+.grip:hover{color:var(--ink);background:var(--sunk)}
+.grip:focus-visible{color:var(--ink);outline:2px solid var(--accent);outline-offset:-2px}
+.grip svg{width:14px;height:18px;fill:currentColor;pointer-events:none}
+.setup-row.dragging{position:relative;z-index:2;background:var(--surface);box-shadow:0 8px 24px rgba(0,0,0,.2);border-radius:8px;outline:2px solid var(--accent);outline-offset:-2px}
+body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-webkit-user-select:none}
 .chips{display:flex;flex-wrap:wrap;gap:6px;padding:12px}
 .chip{display:inline-flex;align-items:center;gap:4px;font-family:var(--f-mono);font-weight:500;background:var(--accent-soft);border-radius:6px;padding:4px 4px 4px 9px}
 .chip button{all:unset;cursor:pointer;width:30px;height:30px;font-size:16px;display:grid;place-items:center;border-radius:4px;color:var(--muted)}
@@ -772,7 +778,8 @@ function viewSetup(){
     const ts=sorted().filter(t=>t.list===l.k); if(l.k==="optional")ts.sort(byFreq);
     {const isOff=t=>!!t.off||t.freq==="Optional";const on=ts.filter(t=>!isOff(t)),off=ts.filter(isOff);ts.length=0;ts.push(...on,...off)}
     return `<div class="section"><div class="sec-head"><h2>${esc(l.title)}</h2></div><div class="list">
-      ${ts.map(t=>`<div class="setup-row${t.off?" is-off":""}">
+      ${ts.map(t=>`<div class="setup-row${t.off?" is-off":""}" data-row="${t.id}" data-list="${l.k}" data-grp="${t.off||t.freq==="Optional"?"off":"on"}">
+        <button class="grip" type="button" id="gr-${t.id}" aria-label="Drag to reorder ${esc(t.name)}. Arrow keys move it up or down." title="Drag to reorder">${GRIP}</button>
         ${swCell(t)}
         <textarea aria-label="Task name" id="nm-${t.id}" data-rename="${t.id}" rows="1" class="nm">${esc(t.name)}</textarea>
         <select aria-label="Frequency" id="fq-${t.id}" data-freq="${t.id}">${FREQS.map(f=>`<option ${f===t.freq?"selected":""}>${f}</option>`).join("")}</select>
@@ -796,6 +803,7 @@ function renderTabs(){renderSetupBtn();
 }
 function fitTa(t){t.style.height="auto";t.style.height=t.scrollHeight+"px"}
 function render(){
+  if(S.drag){S.dragPend=true;return}
   $("#today").textContent=fmtLong(todayISO());
   renderTabs();
   if(!S.db){$("#view").innerHTML=`<div class="empty"><strong>Signing in…</strong>Your checklist appears here once you are signed in.</div>`;return}
@@ -878,6 +886,37 @@ document.addEventListener("change",async ev=>{
     else{const nl=el.value.toLowerCase();await S.db.doc("tasks/"+t.id).update({freq:el.value,list:nl,...(t.list==="optional"?{fromOptional:true}:{})});toast(nl!==t.list?`Moved to ${el.value}.`:"Frequency saved.")}}catch(e){writeFail(e)}}
 });
 document.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target.matches&&ev.target.matches("textarea.nm")){ev.preventDefault();ev.target.blur()}});
+/* ---------- drag to reorder tasks in Setup ---------- */
+const GRIP='<svg viewBox="0 0 14 18" aria-hidden="true"><circle cx="4" cy="3" r="1.6"/><circle cx="10" cy="3" r="1.6"/><circle cx="4" cy="9" r="1.6"/><circle cx="10" cy="9" r="1.6"/><circle cx="4" cy="15" r="1.6"/><circle cx="10" cy="15" r="1.6"/></svg>';
+function grpRows(row){return [...row.parentElement.querySelectorAll(`.setup-row[data-grp="${row.dataset.grp}"]`)]}
+function placeRow(row,y){const rows=grpRows(row).filter(r=>r!==row);if(!rows.length)return;
+  const tgt=rows.find(r=>{const b=r.getBoundingClientRect();return y<b.top+b.height/2});
+  if(tgt){if(row.nextElementSibling!==tgt)tgt.before(row)}else{const last=rows[rows.length-1];if(last.nextElementSibling!==row)last.after(row)}}
+async function saveOrder(row){
+  const k=row.dataset.list,ids=[...row.parentElement.querySelectorAll(".setup-row[data-row]")].map(r=>r.dataset.row);
+  const ts=ids.map(id=>S.tasks.find(t=>t.id===id)).filter(Boolean);
+  let vals=ts.map(t=>t.order??0).sort((a,b)=>a-b);if(new Set(vals).size!==vals.length)vals=ts.map((t,i)=>i+1);
+  const prev=new Map(ts.map(t=>[t.id,t.order])),ch=[];
+  ts.forEach((t,i)=>{if(t.order!==vals[i]){t.order=vals[i];ch.push(t)}});
+  render();if(!ch.length)return;
+  try{if(window.TDC&&TDC.batch)await TDC.batch(ch.map(t=>({op:"update",col:"tasks",id:t.id,data:{order:t.order}})));
+    else for(const t of ch)await S.db.doc("tasks/"+t.id).update({order:t.order});
+    toast("New order saved.")}
+  catch(e){ts.forEach(t=>{t.order=prev.get(t.id)});render();writeFail(e)}}
+function endDrag(ev){const d=S.drag;if(!d||(ev&&ev.pointerId!==d.pid))return;
+  clearInterval(d.scroll);d.row.classList.remove("dragging");document.body.classList.remove("is-dragging");S.drag=null;S.dragPend=false;
+  const now=grpRows(d.row).map(r=>r.dataset.row).join();if(now!==d.before)saveOrder(d.row);else render()}
+document.addEventListener("pointerdown",ev=>{const g=ev.target.closest&&ev.target.closest(".grip");if(!g||ev.button>0||S.drag)return;
+  const row=g.closest(".setup-row");if(!row)return;ev.preventDefault();
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+  const d=S.drag={row,pid:ev.pointerId,y:ev.clientY,before:grpRows(row).map(r=>r.dataset.row).join()};
+  row.classList.add("dragging");document.body.classList.add("is-dragging");try{g.setPointerCapture(ev.pointerId)}catch(e){}
+  d.scroll=setInterval(()=>{const e=72,v=d.y<e?-(e-d.y)/3:d.y>innerHeight-e?(d.y-(innerHeight-e))/3:0;if(v){scrollBy(0,v);placeRow(row,d.y)}},16)});
+document.addEventListener("pointermove",ev=>{const d=S.drag;if(!d||ev.pointerId!==d.pid)return;ev.preventDefault();d.y=ev.clientY;placeRow(d.row,ev.clientY)},{passive:false});
+document.addEventListener("pointerup",endDrag);document.addEventListener("pointercancel",endDrag);
+document.addEventListener("keydown",ev=>{const g=ev.target.closest&&ev.target.closest(".grip");if(!g||S.drag||(ev.key!=="ArrowUp"&&ev.key!=="ArrowDown"))return;ev.preventDefault();
+  const row=g.closest(".setup-row"),rows=grpRows(row),i=rows.indexOf(row),j=ev.key==="ArrowUp"?i-1:i+1;if(j<0||j>=rows.length)return;
+  if(j<i)rows[j].before(row);else rows[j].after(row);g.focus();saveOrder(row)});
 document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&(S.confirm==="clearall"||S.confirm==="resetall")&&!S.clearing){S.confirm=null;render()}});
 document.addEventListener("input",ev=>{if(ev.target.matches&&ev.target.matches("textarea.nm"))fitTa(ev.target);if(ev.target.id==="hq"){S.hist=ev.target.value;render()}});
 
