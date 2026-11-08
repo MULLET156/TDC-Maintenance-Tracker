@@ -203,6 +203,8 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-
 .tdays{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0 0 2px 100px}
 .tdl{font-size:12px;font-weight:600;color:var(--muted);margin-right:2px}
 .setup-row select.dbsel{width:auto;padding:4px 6px;font-size:13.5px}
+.daychip.sm .qm{font-size:11px;font-weight:500;color:var(--muted)}
+@media (max-width:620px){.daychip.sm .qm{display:none}}
 .daychip.sm{padding:3px 9px;font-size:13px;gap:5px;border-radius:7px;white-space:nowrap;flex:none}
 @media (max-width:620px){.daychip.sm{padding:3px 7px;gap:4px}}
 .note.warn{color:var(--soon);flex-basis:100%;margin:2px 0 0}
@@ -483,13 +485,26 @@ function calMonths(t){const r=RULE[t.freq];return (t.freq==="Monthly"||t.freq===
 const perStart=(d,P)=>new Date(d.getFullYear(),Math.floor(d.getMonth()/P)*P,1);
 function firstOpen(d){const x=new Date(d);for(let i=0;i<14&&!isOpen(x);i++)x.setDate(x.getDate()+1);return x}
 function lastOpen(d){const x=new Date(d);for(let i=0;i<14&&!isOpen(x);i++)x.setDate(x.getDate()-1);return x}
-function calStatus(t,last,P){const now=new Date(),cur=perStart(now,P),nxt=new Date(cur.getFullYear(),cur.getMonth()+P,1),prev=new Date(cur.getFullYear(),cur.getMonth()-P,1);
+/* Quarterly tasks can be limited to some quarters (task.quarters, 1-4). Skipped quarters don't count: the task
+   is quiet through them, and "previous"/"next" mean the previous/next chosen quarter. */
+const QN=["Q1","Q2","Q3","Q4"],QM=["Jan–Mar","Apr–Jun","Jul–Sep","Oct–Dec"];
+const qOf=d=>Math.floor(d.getMonth()/3)+1;
+function ownQs(t){if(t.freq!=="Quarterly"||!Array.isArray(t.quarters))return null;const q=[...new Set(t.quarters.filter(x=>[1,2,3,4].includes(x)))].sort();return q.length&&q.length<4?q:null}
+function selPer(from,P,sel,dir){let x=new Date(from.getFullYear(),from.getMonth()+dir*P,1);for(let i=0;i<8&&sel&&!sel.includes(qOf(x));i++)x=new Date(x.getFullYear(),x.getMonth()+dir*P,1);return x}
+function offQuarter(t){const sel=ownQs(t);return !!sel&&calMonths(t)===3&&!sel.includes(qOf(new Date()))}
+function calStatus(t,last,P){const now=new Date(),cur=perStart(now,P),sel=P===3?ownQs(t):null,nxt=selPer(cur,P,sel,1),prev=selPer(cur,P,sel,-1);
+  const endOf=x=>lastOpen(new Date(x.getFullYear(),x.getMonth()+P,0));
   const ld=parse(last.date),unit=P===1?"month":P===3?"quarter":"period";
+  if(sel&&!sel.includes(qOf(cur))){
+    if(ld>=prev){const n=firstOpen(nxt);return{s:"ok",label:"Next in "+QN[qOf(nxt)-1],last,next:iso(n),diff:dayDiff(now,n)}}
+    const e=endOf(prev);return{s:"over",label:"Overdue",last,next:iso(e),nextLbl:"Was due",diff:dayDiff(now,e)}}
   if(ld>=cur){const n=firstOpen(nxt);return{s:"ok",label:"Done this "+unit,last,next:iso(n),diff:dayDiff(now,n)}}
-  if(ld<prev){const e=lastOpen(new Date(cur.getFullYear(),cur.getMonth(),0));return{s:"over",label:"Overdue",last,next:iso(e),nextLbl:"Was due",diff:dayDiff(now,e)}}
-  const e=lastOpen(new Date(nxt.getFullYear(),nxt.getMonth(),0)),diff=dayDiff(now,e);
+  if(ld<prev){const e=endOf(prev);return{s:"over",label:"Overdue",last,next:iso(e),nextLbl:"Was due",diff:dayDiff(now,e)}}
+  const e=endOf(cur),diff=dayDiff(now,e);
   if(diff<=(RULE[t.freq].soon||0))return{s:"soon",label:diff<=0?"Due today":"Due soon",last,next:iso(e),nextLbl:"Due by",diff};
   return{s:"new",label:"Due this "+unit,last,next:iso(e),nextLbl:"Due by",diff}}
+const QS_OK=v=>{const s=String(v||"").trim().toLowerCase();if(!s||/^(every|all|any)\b/.test(s))return null;const m=[...s.matchAll(/q\s*([1-4])/g)].map(x=>+x[1]);
+  if(!m.length)return undefined;const q=[...new Set(m)].sort();return q.length===4?null:q};
 const DAYS_OK=v=>{const s=String(v||"").trim().toLowerCase();if(!s||/^(every|all|daily|any)\b/.test(s))return null;
   if(/^week ?days?$/.test(s))return [1,2,3,4,5];if(/^week ?ends?$/.test(s))return [0,6];
   const di=w=>w.length>=2?DAYN.findIndex(n=>n.toLowerCase().startsWith(w.slice(0,3))):-1,out=new Set();
@@ -512,7 +527,9 @@ function lastFor(t){
 }
 function statusOf(t){
   if(t.off||t.freq==="Optional"||!RULE[t.freq])return{s:"opt",label:t.list==="optional"?"Off":"Optional"};
-  const last=lastFor(t); if(!last)return{s:"new",label:S.resets[t.list]?"Not done since reset":"Never logged",last:null};
+  const last=lastFor(t);
+  if(!last&&offQuarter(t)){const n=firstOpen(selPer(perStart(new Date(),3),3,ownQs(t),1));return{s:"ok",label:"Next in "+QN[qOf(n)-1],last:null,next:iso(n),diff:dayDiff(new Date(),n)}}
+  if(!last)return{s:"new",label:S.resets[t.list]?"Not done since reset":"Never logged",last:null};
   {const P=calMonths(t);if(P)return calStatus(t,last,P)}
   const D=ownWday(t),Y=ownDueBy(t),next=Y?nextYearly(parse(last.date),RULE[t.freq],Y):D!=null?nextWeekly(parse(last.date),RULE[t.freq],D):nextDue(parse(last.date),RULE[t.freq],t.freq==="Daily"?taskDays(t):null); const diff=dayDiff(new Date(),next);
   let s,label;
@@ -662,7 +679,7 @@ async function exportBackup(){if(!S.dl){toast("Downloads aren't available here."
   catch(e){if(e&&e.code==="declined")return;toast("The backup didn't finish. Try again.")}}
 async function exportTasks(){if(!S.dl){toast("Downloads aren't available here.");return}
   const ts=S.tasks.slice().sort((a,b)=>{const fa=a.freq==="Optional"?(a.trackFreq||"Monthly"):a.freq,fb=b.freq==="Optional"?(b.trackFreq||"Monthly"):b.freq;return ((FRANK[fa]??9)-(FRANK[fb]??9))||((a.order??0)-(b.order??0))});
-  const lines=[["Task","Frequency","Status","Days","Due by","Subtasks"].map(csvCell).join(",")].concat(ts.map(t=>[t.name,t.freq==="Optional"?(t.trackFreq||"Monthly"):t.freq,(t.off||t.freq==="Optional")?"Off":"On",hasOwnDays(t)?daysText(taskDays(t)," "):ownWday(t)!=null?DAYN[t.wday]:"",ownDueBy(t)?mdText(t.dueBy):"",subsOf(t).map(x=>x.name).join("; ")].map(csvCell).join(",")));
+  const lines=[["Task","Frequency","Status","Days","Due by","Subtasks"].map(csvCell).join(",")].concat(ts.map(t=>[t.name,t.freq==="Optional"?(t.trackFreq||"Monthly"):t.freq,(t.off||t.freq==="Optional")?"Off":"On",hasOwnDays(t)?daysText(taskDays(t)," "):ownWday(t)!=null?DAYN[t.wday]:ownQs(t)?ownQs(t).map(q=>QN[q-1]).join(" "):"",ownDueBy(t)?mdText(t.dueBy):"",subsOf(t).map(x=>x.name).join("; ")].map(csvCell).join(",")));
   try{await S.dl.save({filename:`TDC task list ${todayISO()}.csv`,data:lines.join("\r\n")});toast(`Exported ${ts.length} tasks.`)}
   catch(e){if(e&&e.code==="declined")return;toast("The export didn't finish. Try again.")}}
 async function planImport(file){
@@ -688,9 +705,10 @@ async function planImport(file){
       const raw=fi>=0?unq(r[fi]):"";const f=FREQ_OK(raw);if(raw&&!f){skipped++;continue}
       const st=si>=0?unq(r[si]).toLowerCase():"";const off=/^(off|no|n|false|0)$/.test(st)?true:/^(on|yes|y|true|1)$/.test(st)?false:null;
       const days=di>=0&&r.length>di?DAYS_OK(unq(r[di])):undefined;
+      const qs=di>=0&&r.length>di?QS_OK(unq(r[di])):undefined;
       let dueBy=bi>=0&&r.length>bi?DUEBY_OK(unq(r[bi])):undefined;if(dueBy===undefined&&bi>=0&&r.length>bi&&!unq(r[bi]))dueBy=null;
       const subN=ui>=0&&r.length>ui?[...new Set(unq(r[ui]).split(/[;\n]/).map(x=>x.replace(/\s+/g," ").trim().slice(0,60)).filter(Boolean))].slice(0,30):undefined;
-      const ex=byName.get(nm.toLowerCase());items.push({name:nm,freq:f||null,off,days,dueBy,subN,ex:ex?ex.id:null})}
+      const ex=byName.get(nm.toLowerCase());items.push({name:nm,freq:f||null,off,days,qs,dueBy,subN,ex:ex?ex.id:null})}
     if(!items.length&&!skipped){toast("No tasks found in that file. It needs a Task column.");return}
     S.imp={kind:"csv",file:name,items,newT:items.filter(i=>!i.ex).length,upd:items.filter(i=>i.ex).length,skipped};
   }
@@ -715,14 +733,15 @@ async function applyImport(){const p=S.imp;if(!p||S.impBusy)return;S.impBusy=tru
         if(it.ex){const t=S.tasks.find(x=>x.id===it.ex);if(!t)continue;const up={};
           if(it.freq&&(it.freq!==t.freq||it.freq.toLowerCase()!==t.list)){up.freq=it.freq;up.list=it.freq.toLowerCase()}
           if(it.off!==null&&!!t.off!==it.off)up.off=it.off;
-          if(it.days!==undefined){const ef=up.freq||t.freq;
+          if((up.freq||t.freq)==="Quarterly"){if(it.qs!==undefined&&JSON.stringify(ownQs(t))!==JSON.stringify(it.qs))up.quarters=it.qs}
+          else if(it.days!==undefined){const ef=up.freq||t.freq;
             if(ef==="Weekly"){const w=it.days?it.days[0]:null;if((Number.isInteger(t.wday)?t.wday:null)!==w)up.wday=w}
             else if(JSON.stringify(t.days??null)!==JSON.stringify(it.days))up.days=it.days}
           if(it.subN!==undefined){const cur=subsOf(t);if(cur.map(x=>x.name).join("\n")!==it.subN.join("\n"))up.subs=it.subN.map(n=>cur.find(x=>x.name===n)||{id:"s"+Math.random().toString(36).slice(2,9),name:n})}
           if(it.dueBy!==undefined&&(up.freq||t.freq)==="Yearly"&&(t.dueBy??null)!==it.dueBy)up.dueBy=it.dueBy;
           if(t.freq==="Optional"&&it.off===false&&!up.freq){const f=t.trackFreq||"Monthly";up.freq=f;up.list=f.toLowerCase()}
           if(Object.keys(up).length){await S.db.doc("tasks/"+t.id).update(up);u++}}
-        else{const f=it.freq||"Monthly";await S.db.collection("tasks").add({name:it.name,freq:f,list:f.toLowerCase(),order:++max,off:it.off===true,...(it.days?(f==="Weekly"?{wday:it.days[0]}:{days:it.days}):{}),...(it.dueBy&&f==="Yearly"?{dueBy:it.dueBy}:{}),...(it.subN&&it.subN.length?{subs:it.subN.map(n=>({id:"s"+Math.random().toString(36).slice(2,9),name:n}))}:{})});a++}}
+        else{const f=it.freq||"Monthly";await S.db.collection("tasks").add({name:it.name,freq:f,list:f.toLowerCase(),order:++max,off:it.off===true,...(f==="Quarterly"?(it.qs?{quarters:it.qs}:{}):it.days?(f==="Weekly"?{wday:it.days[0]}:{days:it.days}):{}),...(it.dueBy&&f==="Yearly"?{dueBy:it.dueBy}:{}),...(it.subN&&it.subN.length?{subs:it.subN.map(n=>({id:"s"+Math.random().toString(36).slice(2,9),name:n}))}:{})});a++}}
       toast(`Added ${a} task${a===1?"":"s"} and updated ${u}.`);
     }
     S.imp=null;S.impRemove=false;
@@ -781,6 +800,7 @@ function rowHTML(t){
   const st=statusOf(t), open=S.open===t.id, last=st.last;
   const bits=[`<span class="pill">${st.label}</span>`,(t.list==="optional"&&t.freq==="Optional"&&S.canWrite)?`<label class="mini">Frequency when on <select id="tf-${t.id}" data-track="${t.id}">${FREQS.filter(f=>f!=="Optional").map(f=>`<option ${f===(t.trackFreq||"Monthly")?"selected":""}>${f}</option>`).join("")}</select></label>`:`<span>${t.freq==="Optional"&&t.trackFreq?"Suggested: "+esc(t.trackFreq):esc(t.freq)}</span>`];
   if(ownDueBy(t))bits.push(`<span>Due by ${mdText(t.dueBy)}</span>`);
+  if(ownQs(t))bits.push(`<span>${ownQs(t).map(q=>QN[q-1]).join(" · ")}</span>`);
   if(ownWday(t)!=null)bits.push(`<span>${DAYF[t.wday]}s</span>`);
   if(hasOwnDays(t))bits.push(`<span>${daysText(taskDays(t)," · ")}</span>`);
   if(last)bits.push(`<span>Last <span class="mono">${fmt(last.date)}</span> · ${esc(last.initials||"")}</span>`);
@@ -863,15 +883,17 @@ function subEditHTML(t){const subs=subsOf(t);
   return `<div class="subed"><div class="note">Each subtask gets its own checkbox on the task. The task is logged as done once every box is checked.</div>
     <div class="subchips">${subs.map(x=>`<span class="chip">${esc(x.name)}<button type="button" data-rmsub="${esc(t.id)}|${esc(x.id)}" aria-label="Remove ${esc(x.name)}">×</button></span>`).join("")||'<span class="note">No subtasks yet.</span>'}</div>
     <form class="subadd" data-addsub="${t.id}"><div class="field grow"><label for="ns-${t.id}">New subtask</label><input id="ns-${t.id}" maxlength="60" placeholder="e.g. Op 1" required></div><button class="btn primary" type="submit">Add</button></form></div>`}
+function qtrsRowHTML(t){const sel=ownQs(t)||[1,2,3,4];
+  return `<div class="tdays" role="group" aria-label="Quarters for ${esc(t.name)}"><span class="tdl">Quarters</span>${[1,2,3,4].map(q=>`<label class="daychip sm" title="${QM[q-1]}"><input type="checkbox" id="tq-${t.id}-${q}" data-tqtr="${t.id}" value="${q}" ${sel.includes(q)?"checked":""}><span>${QN[q-1]}</span><small class="qm">${QM[q-1]}</small></label>`).join("")}${subBtnHTML(t)}</div>`}
 function schedRowHTML(t){
-  const row=t.freq==="Daily"?daysRowHTML(t):t.freq==="Weekly"?wdayRowHTML(t):t.freq==="Yearly"?duebyRowHTML(t):`<div class="tdays">${subBtnHTML(t)}</div>`;
+  const row=t.freq==="Daily"?daysRowHTML(t):t.freq==="Weekly"?wdayRowHTML(t):t.freq==="Yearly"?duebyRowHTML(t):t.freq==="Quarterly"&&calMonths(t)===3?qtrsRowHTML(t):`<div class="tdays">${subBtnHTML(t)}</div>`;
   return row+(S.subEdit===t.id?subEditHTML(t):"")}
 function subsRowHTML(t,st){const subs=subsOf(t);if(!subs.length||st.s==="opt")return "";
   const ch=liveChecks(t),n=subs.filter(x=>ch[x.id]).length;
   if(st.s==="ok"&&!n)return `<div class="subprog">${subs.length} subtask${subs.length===1?"":"s"}, all done</div>`;
   return `<div class="subs" role="group" aria-label="Subtasks for ${esc(t.name)}">${subs.map(x=>`<label class="subchk"><input type="checkbox" id="sc-${esc(t.id)}-${esc(x.id)}" data-sub="${esc(t.id)}|${esc(x.id)}" ${ch[x.id]?"checked":""} ${S.canWrite?"":"disabled"}><span>${esc(x.name)}</span>${ch[x.id]?`<small>${esc(ch[x.id])}</small>`:""}</label>`).join("")}<span class="subprog">${n} of ${subs.length}</span></div>`}
 function clinicHTML(){const od=openDays();
-  return `<div class="section"><div class="sec-head"><h2>Clinic days</h2></div><p class="note" style="margin:0">Tasks only come due on days the clinic is open. A daily task done on your last open day of the week is next due on your first open day of the next week, and anything that would fall on a closed day moves to the next open one (a yearly due-by date moves back to the open day before it instead). Each daily task can also be limited to certain days, and each weekly task can be set to one day of the week, using the day boxes under it in the lists below. Yearly tasks can have a due-by date.</p><div class="list"><div class="chips">${[1,2,3,4,5,6,0].map(d=>`<label class="daychip"><input type="checkbox" id="cd-${d}" data-day="${d}" ${od.includes(d)?"checked":""}><span>${DAYN[d]}</span></label>`).join("")}</div></div></div>`;
+  return `<div class="section"><div class="sec-head"><h2>Clinic days</h2></div><p class="note" style="margin:0">Tasks only come due on days the clinic is open. A daily task done on your last open day of the week is next due on your first open day of the next week, and anything that would fall on a closed day moves to the next open one (a yearly due-by date moves back to the open day before it instead). Each daily task can also be limited to certain days, and each weekly task can be set to one day of the week, using the day boxes under it in the lists below. Quarterly tasks can be limited to certain quarters. Yearly tasks can have a due-by date.</p><div class="list"><div class="chips">${[1,2,3,4,5,6,0].map(d=>`<label class="daychip"><input type="checkbox" id="cd-${d}" data-day="${d}" ${od.includes(d)?"checked":""}><span>${DAYN[d]}</span></label>`).join("")}</div></div></div>`;
 }
 const SOON_MAX={Weekly:6,Monthly:27,Quarterly:89,Yearly:364};
 const PER_TXT={Weekly:"Due every week",Monthly:"Due by the end of each month",Quarterly:"Due by the end of each quarter",Yearly:"Due once a year"};
@@ -1012,6 +1034,11 @@ document.addEventListener("change",async ev=>{
     try{await S.db.doc("tasks/"+id).update({dueBy:v});toast(v?`${t.name}: due by ${mdText(v)} each year.`:`${t.name}: no set date.`)}catch(e){writeFail(e)}render();return}
   if(el.dataset.twday){const t=S.tasks.find(x=>x.id===el.dataset.twday);if(!t)return;const v=el.value===""?null:+el.value;
     try{await S.db.doc("tasks/"+t.id).update({wday:v});toast(v===null?`${t.name}: any day of the week.`:`${t.name}: due ${DAYF[v]}s.`)}catch(e){writeFail(e);render()}return}
+  if(el.dataset.tqtr){const t=S.tasks.find(x=>x.id===el.dataset.tqtr);if(!t)return;
+    const qs=[...document.querySelectorAll(`[data-tqtr="${t.id}"]`)].filter(b=>b.checked).map(b=>+b.value);
+    if(!qs.length){el.checked=true;toast("Keep at least one quarter.");return}
+    const all=qs.length===4;
+    try{await S.db.doc("tasks/"+t.id).update({quarters:all?null:qs});toast(all?`${t.name}: every quarter.`:`${t.name}: ${qs.map(q=>QN[q-1]).join(", ")} only.`)}catch(e){el.checked=!el.checked;writeFail(e)}return}
   if(el.dataset.tday){const t=S.tasks.find(x=>x.id===el.dataset.tday);if(!t)return;
     const days=[...document.querySelectorAll(`[data-tday="${t.id}"]`)].filter(b=>b.checked).map(b=>+b.value);
     if(!days.length){el.checked=true;toast("Keep at least one day.");return}
