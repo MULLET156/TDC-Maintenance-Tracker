@@ -326,6 +326,11 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-
   --c-setup:#A9B8BB;--c-setup-soft:#1E2B2E;--c-setup-fg:#0F1A1C}
 body{--pg:var(--accent);--pg-soft:var(--accent-soft);--pg-fg:var(--accent-ink)}
 body[data-view="today"]{--pg:var(--c-today);--pg-soft:var(--c-today-soft);--pg-fg:var(--c-today-fg)}
+body[data-view="over"]{--pg:var(--over);--pg-soft:var(--over-soft);--pg-fg:var(--surface)}
+body[data-view="soon"]{--pg:var(--soon);--pg-soft:var(--soon-soft);--pg-fg:var(--surface)}
+body[data-view="new"]{--pg:var(--new);--pg-soft:var(--new-soft);--pg-fg:var(--surface)}
+body[data-view="ok"]{--pg:var(--ok);--pg-soft:var(--ok-soft);--pg-fg:var(--surface)}
+body[data-view="all"]{--pg:var(--c-daily);--pg-soft:var(--c-daily-soft);--pg-fg:var(--c-daily-fg)}
 body[data-view="daily"]{--pg:var(--c-daily);--pg-soft:var(--c-daily-soft);--pg-fg:var(--c-daily-fg)}
 body[data-view="weekly"]{--pg:var(--c-weekly);--pg-soft:var(--c-weekly-soft);--pg-fg:var(--c-weekly-fg)}
 body[data-view="monthly"]{--pg:var(--c-monthly);--pg-soft:var(--c-monthly-soft);--pg-fg:var(--c-monthly-fg)}
@@ -352,10 +357,10 @@ header.top{display:flex;flex-direction:column;align-items:stretch;justify-conten
 .vh2{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .hbar .whoami select{padding:6px 10px}
 .hic{display:inline-flex}.hic svg,.ic{width:17px;height:17px;flex:none}
-.soundbtn.setupbtn{padding:6px 12px}
+.soundbtn.setupbtn{padding:6px 12px;white-space:nowrap}
 .soundbtn.setupbtn[aria-pressed=true]{background:var(--pg);border-color:var(--pg);color:var(--pg-fg)}
 /* page tabs */
-.ptabs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.ptabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
 .ptab{--tc:var(--accent);--tc-soft:var(--accent-soft);--tc-fg:var(--accent-ink);position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:58px;padding:6px 4px;border:2px solid var(--tc);border-radius:12px;background:var(--tc-soft);color:var(--tc);font-weight:800;font-size:14.5px;line-height:1.15;transition:opacity .15s}
 .ptab .pt1{display:flex;align-items:center;gap:6px}
 .ptab .ic{width:19px;height:19px}
@@ -363,6 +368,10 @@ header.top{display:flex;flex-direction:column;align-items:stretch;justify-conten
 .ptab .n.zero{opacity:.55}
 .ptab .pl{white-space:nowrap}
 .ptab[data-tab="today"]{--tc:var(--c-today);--tc-soft:var(--c-today-soft);--tc-fg:var(--c-today-fg)}
+.ptab[data-tab="over"]{--tc:var(--over);--tc-soft:var(--over-soft);--tc-fg:var(--surface)}
+.ptab[data-tab="soon"]{--tc:var(--soon);--tc-soft:var(--soon-soft);--tc-fg:var(--surface)}
+.ptab[data-tab="new"]{--tc:var(--new);--tc-soft:var(--new-soft);--tc-fg:var(--surface)}
+.ptab[data-tab="ok"]{--tc:var(--ok);--tc-soft:var(--ok-soft);--tc-fg:var(--surface)}
 .ptab[data-tab="daily"]{--tc:var(--c-daily);--tc-soft:var(--c-daily-soft);--tc-fg:var(--c-daily-fg)}
 .ptab[data-tab="weekly"]{--tc:var(--c-weekly);--tc-soft:var(--c-weekly-soft);--tc-fg:var(--c-weekly-fg)}
 .ptab[data-tab="monthly"]{--tc:var(--c-monthly);--tc-soft:var(--c-monthly-soft);--tc-fg:var(--c-monthly-fg)}
@@ -380,6 +389,13 @@ header.top{display:flex;flex-direction:column;align-items:stretch;justify-conten
 .pagehead .phn{font-family:var(--f-mono);font-weight:600;font-size:13px;color:var(--pg);white-space:nowrap}
 .pagehead p{grid-column:1/-1;margin:0;font-size:13px;color:var(--ink);opacity:.85}
 /* Today: status filter chips */
+.ibubs{display:flex;flex-wrap:wrap;gap:8px}
+.ibub{display:inline-flex;align-items:center;gap:7px;padding:7px 14px 7px 10px;border:2px solid var(--tc,var(--line));border-radius:999px;background:var(--tc-soft,var(--surface));color:var(--tc,var(--ink));font-weight:700;font-size:14px}
+.ibub .ic{width:17px;height:17px}
+.ibub .bn{font-family:var(--f-mono);font-size:12.5px;font-weight:600;opacity:.8}
+.ibub[aria-pressed="true"]{background:var(--tc,var(--ink));color:var(--tc-fg,var(--surface));box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
+.ibub.b-all{--tc:var(--c-daily);--tc-soft:var(--surface);--tc-fg:var(--c-daily-fg)}
+@media (max-width:640px){.ibub{padding:6px 11px 6px 8px;font-size:13px}}
 .schips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
 .schip{--c:var(--accent);display:flex;align-items:baseline;gap:7px;padding:8px 12px;border:1px solid var(--line);border-left:5px solid var(--c);border-radius:10px;background:var(--surface);color:var(--ink);font-weight:700;font-size:13px;text-align:left}
 .schip b{font-family:var(--f-display);font-stretch:80%;font-size:22px;line-height:1;color:var(--c);font-variant-numeric:tabular-nums}
@@ -403,11 +419,13 @@ header.top{display:flex;flex-direction:column;align-items:stretch;justify-conten
   .hbar{grid-template-columns:minmax(0,1fr) auto!important}
   .hbar .hdr-date,#syncTxt,.hbar .lbl,#themeBtn{display:none}
   .hbar .whoami{padding:2px}.hbar .whoami label{display:none}.hbar .whoami select{padding:6px 4px 6px 8px;max-width:72px}
-  .hbar .hdr-tools{flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px}
+  .hbar .hdr-tools{flex-direction:row;flex-wrap:nowrap;align-items:center;gap:4px}
+  .hbar .hdr-row,.hbar .hdr-row2{gap:4px}
+  .hbar .hdr-tools .soundbtn{width:34px;height:34px}
   .hbar .logo img{max-width:118px;object-fit:contain;object-position:left center}
   .hbar .hdr-row{flex-wrap:nowrap}
   .soundbtn.setupbtn{width:36px;height:36px;padding:0;justify-content:center}
-  .ptabs{position:fixed;left:0;right:0;bottom:0;z-index:15;gap:0;grid-template-columns:repeat(6,minmax(0,1fr));background:var(--surface);border-top:1px solid var(--line);padding:5px max(4px,env(safe-area-inset-left,0px)) calc(5px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-right,0px));box-shadow:0 -4px 14px rgba(0,0,0,.08)}
+  .ptabs{position:fixed;left:0;right:0;bottom:0;z-index:15;gap:0;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--surface);border-top:1px solid var(--line);padding:5px max(4px,env(safe-area-inset-left,0px)) calc(5px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-right,0px));box-shadow:0 -4px 14px rgba(0,0,0,.08)}
   .ptab{border:0;background:transparent;min-height:50px;border-radius:10px;font-size:11px;font-weight:700;color:var(--muted);opacity:1!important;padding:4px 1px}
   .ptab .pt1{flex-direction:column;gap:1px;position:relative}
   .ptab .ic{width:22px;height:22px;color:var(--tc)}
@@ -486,7 +504,8 @@ header.top{display:flex;flex-direction:column;align-items:stretch;justify-conten
         </div>
       </div>
       <div class="hdr-row2">
-        <button class="soundbtn setupbtn" id="logbtn" type="button" data-tab="history" aria-pressed="false" aria-label="Completion log"><span class="hic" data-ic="history"></span><span class="lbl">Completion log</span></button>
+        <button class="soundbtn setupbtn" id="allbtn" type="button" data-tab="all" aria-pressed="false" aria-label="All tasks"><span class="hic" data-ic="all"></span><span class="lbl">All tasks</span></button>
+        <button class="soundbtn setupbtn" id="logbtn" type="button" data-tab="history" aria-pressed="false" aria-label="Log"><span class="hic" data-ic="history"></span><span class="lbl">Log</span></button>
         <button class="soundbtn setupbtn" id="setupbtn" type="button" data-tab="setup" aria-pressed="false" aria-label="Setup"><span class="hic" data-ic="setup"></span><span class="lbl">Setup</span></button>
       </div>
     </div>
@@ -1097,18 +1116,25 @@ function listSection(k,filterSet){
   const groupOpen=S.open==="all-"+k;
   const canAct=S.canWrite&&!filterSet&&tasks.length&&k!=="optional";
   const resetBtn=S.confirm==="reset-"+k?`<span class="confirm">Mark all ${k} tasks not done? <button class="btn danger" data-reset="${k}">Reset</button><button class="btn ghost" data-cancel>Cancel</button></span>`:`<button class="btn ghost" data-ask="reset-${k}">Reset ${k} tasks</button>`;
-  const own=S.tab===k,tools=canAct?`<div class="toolbar">${resetBtn}<button class="btn" data-open="all-${k}">${groupOpen?"Close":ic("check")+"Log all "+k+" tasks"}</button></div>`:"";
+  const own=S.tab==="all"&&S.allList===k,tools=canAct?`<div class="toolbar">${resetBtn}<button class="btn" data-open="all-${k}">${groupOpen?"Close":ic("check")+"Log all "+k+" tasks"}</button></div>`:"";
   const head=own?(tools?`<div class="sec-head tools-only">${tools}</div>`:""):`<div class="sec-head"><h2 style="--tc:var(--c-${k});--tc-soft:var(--c-${k}-soft)"><span class="lic">${ic(k)}</span>${esc(meta.title)}</h2>${tools}</div>`;
   const gp=groupOpen?`<div class="list" style="margin-bottom:2px">${panelHTML(null,k)}</div>`:"";
   if(!tasks.length)return filterSet?"":`<div class="section">${head}<div class="empty">No ${k} tasks yet. Add them under Setup.</div></div>`;
   const hint=k==="optional"&&!filterSet&&S.canWrite?`<p class="note" style="margin:0">Turn tasks on or off on the Setup page. A task that's on moves into the section for its frequency and gets due dates; turning one off sends it back here.</p>`:"";
   return `<div class="section">${head}${hint}${gp}<div class="list">${tasks.map(rowHTML).join("")}</div></div>`;
 }
+function viewStatus(st){const html=LISTS.map(l=>listSection(l.k,[st])).join("");
+  if(html)return html;
+  const E={over:["Nothing overdue","Every task is on schedule."],soon:["Nothing due soon","No task is inside its due soon window right now."],new:["Nothing waiting to start","Every task has been logged since it last came due."],ok:["Nothing completed yet","Tasks show here once they're logged and not due again yet."]}[st];
+  return `<div class="empty"><strong>${E[0]}</strong>${E[1]}</div>`}
+function viewAll(){const n=k=>S.tasks.filter(t=>t.list===k&&!t.off&&t.freq!=="Optional").length;
+  const bubs=`<div class="ibubs" role="group" aria-label="Interval"><button type="button" class="ibub b-all" data-alllist="" aria-pressed="${!S.allList}">${ic("all")}All<span class="bn">${S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length}</span></button>${LISTS.map(l=>`<button type="button" class="ibub" data-alllist="${l.k}" aria-pressed="${S.allList===l.k}" style="--tc:var(--c-${l.k});--tc-soft:var(--c-${l.k}-soft);--tc-fg:var(--c-${l.k}-fg)">${ic(l.k)}${esc(l.label)}<span class="bn">${n(l.k)}</span></button>`).join("")}</div>`;
+  return bubs+(S.allList?listSection(S.allList,null):LISTS.map(l=>listSection(l.k,null)).join(""))}
 function viewToday(){
-  const set=S.filter?[S.filter]:["over","soon","new"];
+  const set=["over","soon","new"];
   const html=LISTS.map(l=>listSection(l.k,set)).join("");
   const c=statusCounts().all;
-  const top=`<div class="schips" role="group" aria-label="Show tasks that are">${[["all","All",needN(c)],["over","Overdue",c.over],["soon","Due soon",c.soon],["new","Not started",c.new],["ok","On track",c.ok]].map(([k,l,n])=>`<button type="button" class="schip s-${k}" data-filter="${k}" aria-pressed="${k==="all"?!S.filter:S.filter===k}"><b>${n}</b>${l}</button>`).join("")}</div>`;
+  const top="";
   if(!html)return top+`<div class="empty"><strong>All caught up</strong>Nothing is overdue, due soon, or waiting for a first log.</div>`;
   return top+html;
 }
@@ -1211,32 +1237,41 @@ const IC={today:'<path d="M6 9a6 6 0 0 1 12 0c0 6.5 2.5 8.5 2.5 8.5h-17S6 15.5 6
   yearly:'<path d="M12 3.2l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.6l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"/>',
   history:'<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.4"/><path d="M3.5 3.5v4.9h4.9"/><path d="M12 7.5V12l3 2"/>',
   setup:'<path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/>',
+  over:'<path d="M12 3.5L2.8 19.5h18.4z"/><path d="M12 10v4M12 17h.01"/>',
+  soon:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  new:'<circle cx="12" cy="12" r="8.5" stroke-dasharray="3.2 2.6"/>',
+  ok:'<circle cx="12" cy="12" r="8.5"/><path d="M8 12.3l2.8 2.8L16.2 9.6"/>',
+  all:'<path d="M9 6.5h11M9 12h11M9 17.5h11"/><path d="M4 6.5h.01M4 12h.01M4 17.5h.01"/>',
   check:'<path d="M4.5 12.5l5 5L19.5 7"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>',reset:'<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.4"/><path d="M3.5 3.5v4.9h4.9"/>'};
 const ic=n=>IC[n]?`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`:"";
 document.querySelectorAll("[data-ic]").forEach(e=>{e.innerHTML=ic(e.dataset.ic)});
-const PAGES=[["today","Today"],["daily","Daily"],["weekly","Weekly"],["monthly","Monthly"],["quarterly","Quarterly"],["yearly","Yearly"]];
+const PAGES=[["today","Today"],["over","Overdue"],["soon","Due soon"],["new","Not started"],["ok","Completed"]];
+const STATUS_PAGES=["over","soon","new","ok"];
 function statusCounts(){const c={all:{over:0,soon:0,ok:0,new:0}};for(const l of LISTS)c[l.k]={over:0,soon:0,ok:0,new:0};
   for(const t of S.tasks){const s=statusOf(t).s;if(c.all[s]!=null){c.all[s]++;if(c[t.list])c[t.list][s]++}}return c}
 const needN=x=>x?x.over+x.soon+x.new:0;
 function pageHead(C){const h=$("#pageHead");if(!h)return;document.body.dataset.view=S.tab;
-  const L=LISTS.find(l=>l.k===S.tab),all=S.loaded.t;
+  const all=S.loaded.t,L=S.tab==="all"&&S.allList?LISTS.find(l=>l.k===S.allList):null;
   const lt=k=>S.tasks.filter(t=>t.list===k&&!t.off&&t.freq!=="Optional").length,s=n=>`${n} task${n===1?"":"s"}`;
   const SUB={daily:"Due each clinic day it's scheduled. Log each one when it's done, or log the whole list at once.",weekly:"Due once a week, or on the day of the week set in Setup.",monthly:"Shows up on the 1st and is due by the end of the month.",quarterly:"Shows up on the first day of each quarter it runs in and is due by the end of that quarter.",yearly:"Due once a year, or by its due-by date."};
   const P=S.tab==="today"?["Today",all?`${needN(C.all)} need attention · ${s(S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length)}`:"","Everything that needs attention today, from every list: overdue, due soon or not started yet. Tap Done on a task to log it."]
-    :S.tab==="history"?["Completion log",all?`${S.log.length} entr${S.log.length===1?"y":"ies"}`:"","Every task logged, newest first. Search it, export it, or remove a mistaken entry."]
+    :STATUS_PAGES.includes(S.tab)?[{over:"Overdue",soon:"Due soon",new:"Not started",ok:"Completed"}[S.tab],all?s(C.all[S.tab]):"",{over:"Past due. Log these first.",soon:"Coming due soon: inside each frequency's due soon window (Setup › Schedule rules).",new:"Not logged yet, or not done since a reset. Monthly and quarterly tasks also wait here from the 1st until they're due soon.",ok:"Done for now: logged and not due again yet."}[S.tab]]
+    :S.tab==="all"?["All tasks",all?(L?`${L.title} · ${s(lt(L.k))}`:s(S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length)):"",L?SUB[L.k]||"":"Every task that's turned on, grouped by how often it's due. Tap an interval to see just that list."]
+    :S.tab==="history"?["Log",all?`${S.log.length} entr${S.log.length===1?"y":"ies"}`:"","Every task logged, newest first. Search it, export it, or remove a mistaken entry."]
     :S.tab==="setup"?["Setup","","Team, clinic days, schedule rules, tasks, logo, appearance and backups."]
-    :L?[L.title,all?`${needN(C[L.k])} need attention · ${s(lt(L.k))}`:"",SUB[L.k]||""]:null;
+    :null;
   h.hidden=!P;if(!P)return;
-  $("#phIcon").innerHTML=ic(S.tab);$("#phTitle").textContent=P[0];$("#phN").textContent=P[1];$("#phSub").textContent=P[2]}
-function renderSetupBtn(){for(const [id,t] of [["setupbtn","setup"],["logbtn","history"]]){const b=document.getElementById(id);if(b)b.setAttribute("aria-pressed",String(S.tab===t))}}
+  $("#phIcon").innerHTML=ic(L?L.k:S.tab);$("#phTitle").textContent=P[0];$("#phN").textContent=P[1];$("#phSub").textContent=P[2]}
+function renderSetupBtn(){for(const [id,t] of [["setupbtn","setup"],["logbtn","history"],["allbtn","all"]]){const b=document.getElementById(id);if(b)b.setAttribute("aria-pressed",String(S.tab===t))}}
 function renderTabs(C){renderSetupBtn();C=C||statusCounts();const ready=S.loaded.t;
-  $("#tabs").innerHTML=PAGES.map(([k,l])=>{const n=ready?needN(k==="today"?C.all:C[k]):null;
-    return `<button class="ptab" role="tab" data-tab="${k}" aria-selected="${S.tab===k}" aria-label="${l}${n!=null?`, ${n} need attention`:""}"><span class="pt1">${ic(k)}<span class="n${n===0?" zero":""}">${n==null?"–":n}</span></span><span class="pl">${l}</span></button>`}).join("");
+  $("#tabs").innerHTML=PAGES.map(([k,l])=>{const n=ready?(k==="today"?needN(C.all):C.all[k]):null;
+    return `<button class="ptab" role="tab" data-tab="${k}" aria-selected="${S.tab===k}" aria-label="${l}${n!=null?`, ${n} task${n===1?"":"s"}`:""}"><span class="pt1">${ic(k)}<span class="n${n===0?" zero":""}">${n==null?"–":n}</span></span><span class="pl">${l}</span></button>`}).join("");
   pageHead(C);
 }
 function fitTa(t){t.style.height="auto";t.style.height=t.scrollHeight+"px"}
 function render(){
   if(S.drag){S.dragPend=true;return}
+  if(LISTS.some(l=>l.k===S.tab)){S.allList=S.tab;S.tab="all"}
   $("#today").textContent=fmtLong(todayISO());
   const C=statusCounts();renderTabs(C);
   if(!S.db){$("#view").innerHTML=`<div class="empty"><strong>Signing in…</strong>Your checklist appears here once you are signed in.</div>`;return}
@@ -1247,9 +1282,11 @@ function render(){
   let h="";
   if(!S.tasks.length&&S.tab!=="setup"&&S.tab!=="history")h=`<div class="empty"><strong>No tasks yet</strong>Add your checklist under Setup, or import one under Setup → Import & export.</div>`;
   else if(S.tab==="today")h=viewToday();
+  else if(STATUS_PAGES.includes(S.tab))h=viewStatus(S.tab);
+  else if(S.tab==="all")h=viewAll();
   else if(S.tab==="history")h=viewHistory();
   else if(S.tab==="setup")h=viewSetup();
-  else h=listSection(S.tab,null);
+  else h=viewToday();
   if(!getMe()&&S.canWrite&&S.tab!=="setup")h=`<div class="empty" style="text-align:left"><strong>Who's logging?</strong>Pick your initials in the top corner. This device remembers them.</div>`+h;
   $("#view").innerHTML=h;
   document.querySelectorAll("#view textarea.nm").forEach(fitTa);
@@ -1272,6 +1309,7 @@ document.addEventListener("click",async ev=>{
   if(b.dataset.settheme){setTheme(b.dataset.settheme);return}
   if(b.id==="snd"){const on=!soundOn();try{localStorage.setItem("tdc-sound",on?"on":"off")}catch(e){}renderSnd();if(on){primeAudio();playDone()}return}
   if(b.dataset.tab){S.tab=b.dataset.tab;S.open=null;S.confirm=null;if(b.dataset.tab!=="today")S.filter=null;try{history.replaceState(null,"","#"+b.dataset.tab)}catch(e){}render();return}
+  if(b.dataset.alllist!==undefined){S.tab="all";S.allList=b.dataset.alllist||null;S.open=null;S.confirm=null;render();return}
   if(b.dataset.filter){S.tab="today";S.open=null;S.confirm=null;S.filter=b.dataset.filter==="all"?null:b.dataset.filter;render();return}
   if("clear" in b.dataset){S.filter=null;render();return}
   if(b.dataset.open){S.open=S.open===b.dataset.open?null:b.dataset.open;render();const f=document.querySelector(`[data-log="${S.open}"] input[type=text],[data-log="${S.open}"] .grow input`);if(f)f.focus();return}
