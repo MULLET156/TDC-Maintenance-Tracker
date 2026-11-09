@@ -54,7 +54,7 @@ To include anything logged since the last backup, open the old claude.ai tracker
 
 The repository ships with a neutral "Your logo here" placeholder. To use your own logo:
 
-- **For everyone, from the app:** sign in, open **Setup → Logo** and upload it (with an optional separate logo for Dark mode). It's saved in the database.
+- **For everyone, from the app:** sign in, open **Setup → Logo** and upload it (with an optional separate logo for Dark mode). It's saved in the database and also shows on the sign-in screen.
 - **On the server (also shows on the sign-in screen):** in **Files → File Manager**, create a `brand` folder next to `index.html` and put `logo.png` in it (and `logo-dark.png` for Dark mode, if you have one). The `brand` folder isn't in the repository, so deploys never touch it. A logo uploaded in Setup takes priority over these files.
 
 ## Updating

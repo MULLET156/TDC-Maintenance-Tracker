@@ -144,7 +144,19 @@ function signed_in(PDO $pdo): bool {
 }
 
 if ($op === 'status') {
-    out(200, ['ok' => true, 'signedIn' => signed_in($pdo)]);
+    $in = signed_in($pdo);
+    $res = ['ok' => true, 'signedIn' => $in];
+    if (!$in) {
+        // The sign-in screen shows the logo uploaded in Setup > Logo (an image only; nothing else is sent).
+        $logo = [];
+        foreach (['l' => 'logo-light', 'd' => 'logo-dark'] as $k => $id) {
+            $d = load($pdo, 'settings', $id);
+            $src = is_array($d) && isset($d['src']) && is_string($d['src']) ? $d['src'] : '';
+            if ($src !== '' && strlen($src) < 240000 && preg_match('#^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$#', $src)) $logo[$k] = $src;
+        }
+        $res['logo'] = (object)$logo;
+    }
+    out(200, $res);
 }
 
 if ($op === 'login') {

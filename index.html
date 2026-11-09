@@ -610,6 +610,7 @@ window.TDC=(function(){
         await new Promise(r=>setTimeout(r,5000));
       }
     }
+    if(st.logo&&typeof st.logo==="object"){window.TDC_LOGO=st.logo;document.dispatchEvent(new Event("tdc-logo"))}
     document.getElementById("signinForm").hidden=false;document.getElementById("signinMsg").textContent="";
     if(!st.signedIn)await gate();
     signedOutHook=(function hook(){return async()=>{signedOutHook=null;await gate();signedOutHook=hook();refreshAll()}})();
@@ -985,7 +986,8 @@ async function applyImport(){const p=S.imp;if(!p||S.impBusy)return;S.impBusy=tru
 const LOGO_DEF={l:(document.querySelector(".logo .logo-l")||{}).src||"",d:(document.querySelector(".logo .logo-d")||{}).src||""};
 const LOGO_OK=v=>typeof v==="string"&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+\/=]+$/.test(v)&&v.length<240000;
 {const BR={l:"",d:""};[["l","brand/logo.png"],["d","brand/logo-dark.png"]].forEach(([k,f])=>{const im=new Image();im.onload=()=>{BR[k]=f;if(BR.l)LOGO_DEF.l=BR.l;if(BR.d||BR.l)LOGO_DEF.d=BR.d||BR.l;applyLogo();if(S.tab==="setup"&&S.db)render()};im.src=f})}
-function applyLogo(){const l=S.logo.l||LOGO_DEF.l,d=S.logo.d||S.logo.l||LOGO_DEF.d;
+document.addEventListener("tdc-logo",()=>applyLogo());
+function applyLogo(){const T=S.db?{}:(window.TDC_LOGO||{}),l=S.logo.l||T.l||LOGO_DEF.l,d=S.logo.d||S.logo.l||T.d||T.l||LOGO_DEF.d;
   document.querySelectorAll("img.logo-l").forEach(i=>{if(i.src!==l)i.src=l});document.querySelectorAll("img.logo-d").forEach(i=>{if(i.src!==d)i.src=d})}
 function shrinkLogo(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),img=new Image();
   img.onload=()=>{try{let w=img.naturalWidth||600,h=img.naturalHeight||200;let k=Math.min(1,720/w,240/h);
