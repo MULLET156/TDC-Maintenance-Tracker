@@ -50,6 +50,13 @@ Open the site, sign in with the office password, then go to **Setup → Import &
 
 To include anything logged since the last backup, open the old claude.ai tracker, export a fresh **Full backup (.json)** from Setup, and import that file instead. Log entries you already have are skipped, so importing twice is safe.
 
+## Your logo
+
+The repository ships with a neutral "Your logo here" placeholder. To use your own logo:
+
+- **For everyone, from the app:** sign in, open **Setup → Logo** and upload it (with an optional separate logo for Dark mode). It's saved in the database.
+- **On the server (also shows on the sign-in screen):** in **Files → File Manager**, create a `brand` folder next to `index.html` and put `logo.png` in it (and `logo-dark.png` for Dark mode, if you have one). The `brand` folder isn't in the repository, so deploys never touch it. A logo uploaded in Setup takes priority over these files.
+
 ## Updating
 
 Edit the files and push to `main`. With auto deployment on, Hostinger picks the change up within a minute or two; otherwise click **Deploy** in hPanel → GIT. `config.php` and the database are never touched by a deploy.
