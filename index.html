@@ -1108,7 +1108,7 @@ function viewToday(){
   const set=S.filter?[S.filter]:["over","soon","new"];
   const html=LISTS.map(l=>listSection(l.k,set)).join("");
   const c=statusCounts().all;
-  const top=`<div class="schips" role="group" aria-label="Show tasks that are">${[["all","Needs attention",needN(c)],["over","Overdue",c.over],["soon","Due soon",c.soon],["new","Not started",c.new],["ok","On track",c.ok]].map(([k,l,n])=>`<button type="button" class="schip s-${k}" data-filter="${k}" aria-pressed="${k==="all"?!S.filter:S.filter===k}"><b>${n}</b>${l}</button>`).join("")}</div>`;
+  const top=`<div class="schips" role="group" aria-label="Show tasks that are">${[["all","All",needN(c)],["over","Overdue",c.over],["soon","Due soon",c.soon],["new","Not started",c.new],["ok","On track",c.ok]].map(([k,l,n])=>`<button type="button" class="schip s-${k}" data-filter="${k}" aria-pressed="${k==="all"?!S.filter:S.filter===k}"><b>${n}</b>${l}</button>`).join("")}</div>`;
   if(!html)return top+`<div class="empty"><strong>All caught up</strong>Nothing is overdue, due soon, or waiting for a first log.</div>`;
   return top+html;
 }
@@ -1222,7 +1222,7 @@ function pageHead(C){const h=$("#pageHead");if(!h)return;document.body.dataset.v
   const L=LISTS.find(l=>l.k===S.tab),all=S.loaded.t;
   const lt=k=>S.tasks.filter(t=>t.list===k&&!t.off&&t.freq!=="Optional").length,s=n=>`${n} task${n===1?"":"s"}`;
   const SUB={daily:"Due each clinic day it's scheduled. Log each one when it's done, or log the whole list at once.",weekly:"Due once a week, or on the day of the week set in Setup.",monthly:"Shows up on the 1st and is due by the end of the month.",quarterly:"Shows up on the first day of each quarter it runs in and is due by the end of that quarter.",yearly:"Due once a year, or by its due-by date."};
-  const P=S.tab==="today"?["Needs attention",all?`${needN(C.all)} of ${s(S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length)}`:"","Everything overdue, due soon or not started yet, from every list. Tap Done on a task to log it."]
+  const P=S.tab==="today"?["Today",all?`${needN(C.all)} need attention · ${s(S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length)}`:"","Everything that needs attention today, from every list: overdue, due soon or not started yet. Tap Done on a task to log it."]
     :S.tab==="history"?["Completion log",all?`${S.log.length} entr${S.log.length===1?"y":"ies"}`:"","Every task logged, newest first. Search it, export it, or remove a mistaken entry."]
     :S.tab==="setup"?["Setup","","Team, clinic days, schedule rules, tasks, logo, appearance and backups."]
     :L?[L.title,all?`${needN(C[L.k])} need attention · ${s(lt(L.k))}`:"",SUB[L.k]||""]:null;
