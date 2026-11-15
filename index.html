@@ -109,6 +109,7 @@ nav.tabs button[data-tab="today"][aria-selected=true]{background:var(--accent);c
 .row:first-child{border-top:0}
 .strip{background:var(--c)}
 .strip.hatch{background:repeating-linear-gradient(135deg,var(--c) 0 3px,transparent 3px 7px)}
+.row[data-s=wait]{--c:var(--line)} .row[data-s=wait] .pill{--cs:var(--sunk);--c:var(--muted)}
 .row[data-s=over]{--c:var(--over)} .row[data-s=soon]{--c:var(--soon)} .row[data-s=ok]{--c:var(--ok)} .row[data-s=new]{--c:var(--new)} .row[data-s=opt]{--c:var(--line)}
 .main{padding:11px 12px 11px 14px;min-width:0;display:flex;flex-direction:column;gap:3px}
 .name{font-weight:600;overflow-wrap:anywhere}
@@ -172,7 +173,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-
 .dlg h3{margin:0;font-family:var(--f-display);font-stretch:85%;font-weight:800;font-size:21px}
 .dlg p{margin:0;font-size:14px;color:var(--muted)}
 .dlg-actions{justify-content:flex-end;margin-top:6px}
-.btn.danger.solid{background:var(--over);border-color:var(--over);color:var(--bg)}
+.btn.danger.solid{background:var(--over);border-color:var(--over);color:var(--surface)}
 .btn.danger.solid:disabled{opacity:.6}
 .io{display:flex;flex-direction:column;gap:6px;padding:12px;border-top:1px solid var(--line)}
 .io:first-child{border-top:0}
@@ -422,7 +423,8 @@ header.top{display:flex;flex-direction:column;align-items:stretch;justify-conten
   .hbar .hdr-tools{flex-direction:row;flex-wrap:nowrap;align-items:center;gap:4px}
   .hbar .hdr-row,.hbar .hdr-row2{gap:4px}
   .hbar .hdr-tools .soundbtn{width:34px;height:34px}
-  .hbar .logo img{max-width:118px;object-fit:contain;object-position:left center}
+  .hbar .brand,.hbar .logo{min-width:0;max-width:100%}
+  .hbar .logo img{max-width:min(118px,100%);object-fit:contain;object-position:left center}
   .hbar .hdr-row{flex-wrap:nowrap}
   .soundbtn.setupbtn{width:36px;height:36px;padding:0;justify-content:center}
   .ptabs{position:fixed;left:0;right:0;bottom:0;z-index:15;gap:0;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--surface);border-top:1px solid var(--line);padding:5px max(4px,env(safe-area-inset-left,0px)) calc(5px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-right,0px));box-shadow:0 -4px 14px rgba(0,0,0,.08)}
@@ -437,6 +439,11 @@ header.top{display:flex;flex-direction:column;align-items:stretch;justify-conten
   #toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
   .pagehead{padding:7px 12px;border-left-width:5px}
   .pagehead p{display:none}
+  .pagehead{grid-template-columns:auto minmax(0,1fr)}
+  .pagehead .phn{grid-column:2;font-size:12px;white-space:normal}
+  :root[data-theme="arcade"] .hbar .logo{padding:3px 6px;box-shadow:3px 3px 0 var(--line)}
+  :root[data-theme="arcade"] .hbar .logo img{height:26px;max-width:96px}
+  :root[data-theme="arcade"] .hbar .hdr-tools .soundbtn,:root[data-theme="arcade"] .hbar .whoami{box-shadow:2px 2px 0 var(--line)}
   .schip{padding:7px 10px;font-size:12.5px}.schip b{font-size:19px}
   :root[data-theme="arcade"] body::after{display:none}
 }
@@ -746,7 +753,7 @@ function lastFor(t){
 function statusOf(t){
   if(t.off||t.freq==="Optional"||!RULE[t.freq])return{s:"opt",label:t.list==="optional"?"Off":"Optional"};
   const last=lastFor(t);
-  if(!last&&offQuarter(t)){const n=firstOpen(selPer(perStart(new Date(),3),3,ownQs(t),1));return{s:"ok",label:"Next in "+QN[qOf(n)-1],last:null,next:iso(n),diff:dayDiff(new Date(),n)}}
+  if(!last&&offQuarter(t)){const n=firstOpen(selPer(perStart(new Date(),3),3,ownQs(t),1));return{s:"wait",label:"Starts in "+QN[qOf(n)-1],last:null,next:iso(n),diff:dayDiff(new Date(),n)}}
   if(!last)return{s:"new",label:S.resets[t.list]?"Not done since reset":"Never logged",last:null};
   {const P=calMonths(t);if(P)return calStatus(t,last,P)}
   const D=ownWday(t),Y=ownDueBy(t),next=Y?nextYearly(parse(last.date),RULE[t.freq],Y):D!=null?nextWeekly(parse(last.date),RULE[t.freq],D):nextDue(parse(last.date),RULE[t.freq],t.freq==="Daily"?taskDays(t):null); const diff=dayDiff(new Date(),next);
@@ -776,10 +783,10 @@ function toast(msg,undo){
 }
 
 /* ---------- appearance ---------- */
-const HOST_THEME=document.documentElement.getAttribute("data-theme");
+let HOST_THEME=document.documentElement.getAttribute("data-theme");
 function getTheme(){try{return localStorage.getItem("tdc-theme")||"auto"}catch(e){return "auto"}}
 function applyTheme(){const t=getTheme(),r=document.documentElement;const want=t==="auto"?HOST_THEME:t;if(want){if(r.getAttribute("data-theme")!==want)r.setAttribute("data-theme",want)}else if(r.hasAttribute("data-theme"))r.removeAttribute("data-theme")}
-try{new MutationObserver(()=>{if(getTheme()!=="auto")applyTheme()}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]})}catch(e){}
+try{new MutationObserver(()=>{if(getTheme()!=="auto")applyTheme();else HOST_THEME=document.documentElement.getAttribute("data-theme")}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]})}catch(e){}
 applyTheme();
 const SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
 const MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
@@ -862,7 +869,7 @@ async function logDone(taskIds,scope,date,note){
     }
     S.open=null; render();
     const lists=[...new Set(taskIds.map(id=>(S.tasks.find(x=>x.id===id)||{}).list).filter(Boolean))];
-    const finished=lists.some(k=>{const ts=S.tasks.filter(t=>t.list===k&&!taskIds.includes(t.id)&&statusOf(t).s!=="opt");return ts.every(t=>statusOf(t).s==="ok")});
+    const finished=date===todayISO()&&lists.some(k=>{const ts=S.tasks.filter(t=>t.list===k&&!taskIds.includes(t.id)&&!t.off&&!["opt","wait"].includes(statusOf(t).s));return ts.length>0&&ts.every(t=>statusOf(t).s==="ok")});
     playDone(finished);
     const what=scope?`All ${scope} tasks`:(S.tasks.find(x=>x.id===taskIds[0])||{}).name;
     toast(`Logged: ${what} · ${initials}`,async()=>{
@@ -1128,7 +1135,7 @@ function viewStatus(st){const html=LISTS.map(l=>listSection(l.k,[st])).join("");
   const E={over:["Nothing overdue","Every task is on schedule."],soon:["Nothing due soon","No task is inside its due soon window right now."],new:["Nothing waiting to start","Every task has been logged since it last came due."],ok:["Nothing completed yet","Tasks show here once they're logged and not due again yet."]}[st];
   return `<div class="empty"><strong>${E[0]}</strong>${E[1]}</div>`}
 function viewAll(){const n=k=>S.tasks.filter(t=>t.list===k&&!t.off&&t.freq!=="Optional").length;
-  const bubs=`<div class="ibubs" role="group" aria-label="Interval"><button type="button" class="ibub b-all" data-alllist="" aria-pressed="${!S.allList}">${ic("all")}All<span class="bn">${S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length}</span></button>${LISTS.map(l=>`<button type="button" class="ibub" data-alllist="${l.k}" aria-pressed="${S.allList===l.k}" style="--tc:var(--c-${l.k});--tc-soft:var(--c-${l.k}-soft);--tc-fg:var(--c-${l.k}-fg)">${ic(l.k)}${esc(l.label)}<span class="bn">${n(l.k)}</span></button>`).join("")}</div>`;
+  const bubs=`<div class="ibubs" role="group" aria-label="Interval"><button type="button" class="ibub b-all" id="ab-all" data-alllist="" aria-pressed="${!S.allList}">${ic("all")}All<span class="bn">${S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length}</span></button>${LISTS.map(l=>`<button type="button" class="ibub" id="ab-${l.k}" data-alllist="${l.k}" aria-pressed="${S.allList===l.k}" style="--tc:var(--c-${l.k});--tc-soft:var(--c-${l.k}-soft);--tc-fg:var(--c-${l.k}-fg)">${ic(l.k)}${esc(l.label)}<span class="bn">${n(l.k)}</span></button>`).join("")}</div>`;
   return bubs+(S.allList?listSection(S.allList,null):LISTS.map(l=>listSection(l.k,null)).join(""))}
 function viewToday(){
   const set=["over","soon","new"];
@@ -1248,7 +1255,7 @@ document.querySelectorAll("[data-ic]").forEach(e=>{e.innerHTML=ic(e.dataset.ic)}
 const PAGES=[["today","Today"],["over","Overdue"],["soon","Due soon"],["new","Not started"],["ok","Completed"]];
 const STATUS_PAGES=["over","soon","new","ok"];
 function statusCounts(){const c={all:{over:0,soon:0,ok:0,new:0}};for(const l of LISTS)c[l.k]={over:0,soon:0,ok:0,new:0};
-  for(const t of S.tasks){const s=statusOf(t).s;if(c.all[s]!=null){c.all[s]++;if(c[t.list])c[t.list][s]++}}return c}
+  for(const t of S.tasks){if(!c[t.list])continue;const s=statusOf(t).s;if(c.all[s]!=null){c.all[s]++;c[t.list][s]++}}return c}
 const needN=x=>x?x.over+x.soon+x.new:0;
 function pageHead(C){const h=$("#pageHead");if(!h)return;document.body.dataset.view=S.tab;
   const all=S.loaded.t,L=S.tab==="all"&&S.allList?LISTS.find(l=>l.k===S.allList):null;
@@ -1257,7 +1264,7 @@ function pageHead(C){const h=$("#pageHead");if(!h)return;document.body.dataset.v
   const P=S.tab==="today"?["Today",all?`${needN(C.all)} need attention · ${s(S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length)}`:"","Everything that needs attention today, from every list: overdue, due soon or not started yet. Tap Done on a task to log it."]
     :STATUS_PAGES.includes(S.tab)?[{over:"Overdue",soon:"Due soon",new:"Not started",ok:"Completed"}[S.tab],all?s(C.all[S.tab]):"",{over:"Past due. Log these first.",soon:"Coming due soon: inside each frequency's due soon window (Setup › Schedule rules).",new:"Not logged yet, or not done since a reset. Monthly and quarterly tasks also wait here from the 1st until they're due soon.",ok:"Done for now: logged and not due again yet."}[S.tab]]
     :S.tab==="all"?["All tasks",all?(L?`${L.title} · ${s(lt(L.k))}`:s(S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length)):"",L?SUB[L.k]||"":"Every task that's turned on, grouped by how often it's due. Tap an interval to see just that list."]
-    :S.tab==="history"?["Log",all?`${S.log.length} entr${S.log.length===1?"y":"ies"}`:"","Every task logged, newest first. Search it, export it, or remove a mistaken entry."]
+    :S.tab==="history"?["Log",S.loaded.l?(()=>{const n=S.log.length+(S.older||[]).length,more=!S.olderDone&&S.log.length>=1000;return `${n}${more?"+":""} entr${n===1&&!more?"y":"ies"}`})():"","Every task logged, newest first. Search it, export it, or remove a mistaken entry."]
     :S.tab==="setup"?["Setup","","Team, clinic days, schedule rules, tasks, logo, appearance and backups."]
     :null;
   h.hidden=!P;if(!P)return;
@@ -1265,15 +1272,16 @@ function pageHead(C){const h=$("#pageHead");if(!h)return;document.body.dataset.v
 function renderSetupBtn(){for(const [id,t] of [["setupbtn","setup"],["logbtn","history"],["allbtn","all"]]){const b=document.getElementById(id);if(b)b.setAttribute("aria-pressed",String(S.tab===t))}}
 function renderTabs(C){renderSetupBtn();C=C||statusCounts();const ready=S.loaded.t;
   $("#tabs").innerHTML=PAGES.map(([k,l])=>{const n=ready?(k==="today"?needN(C.all):C.all[k]):null;
-    return `<button class="ptab" role="tab" data-tab="${k}" aria-selected="${S.tab===k}" aria-label="${l}${n!=null?`, ${n} task${n===1?"":"s"}`:""}"><span class="pt1">${ic(k)}<span class="n${n===0?" zero":""}">${n==null?"–":n}</span></span><span class="pl">${l}</span></button>`}).join("");
+    return `<button class="ptab" id="pt-${k}" role="tab" data-tab="${k}" aria-selected="${S.tab===k}" aria-label="${l}${n!=null?`, ${n} task${n===1?"":"s"}`:""}"><span class="pt1">${ic(k)}<span class="n${n===0?" zero":""}">${n==null?"–":n}</span></span><span class="pl">${l}</span></button>`}).join("");
   pageHead(C);
 }
 function fitTa(t){t.style.height="auto";t.style.height=t.scrollHeight+"px"}
 function render(){
   if(S.drag){S.dragPend=true;return}
   if(LISTS.some(l=>l.k===S.tab)){S.allList=S.tab;S.tab="all"}
+  const act0=document.activeElement,tabFocus=act0&&act0.classList&&act0.classList.contains("ptab")?act0.id:null;
   $("#today").textContent=fmtLong(todayISO());
-  const C=statusCounts();renderTabs(C);
+  const C=statusCounts();renderTabs(C);if(tabFocus){const e=document.getElementById(tabFocus);if(e)e.focus()}
   if(!S.db){$("#view").innerHTML=`<div class="empty"><strong>Signing in…</strong>Your checklist appears here once you are signed in.</div>`;return}
   if(!(S.loaded.t&&S.loaded.l&&S.loaded.s))return;
   const active=document.activeElement; const fid=active&&active.id; let sel=null;try{sel=fid?active.selectionStart:null}catch(e){}
@@ -1308,9 +1316,8 @@ document.addEventListener("click",async ev=>{
     try{await S.db.doc("settings/logo-"+(k==="l"?"light":"dark")).delete();S.logo[k]=null;applyLogo();render();toast(k==="l"?"Back to the default logo.":"Dark mode logo removed.")}catch(e){writeFail(e)}return}
   if(b.dataset.settheme){setTheme(b.dataset.settheme);return}
   if(b.id==="snd"){const on=!soundOn();try{localStorage.setItem("tdc-sound",on?"on":"off")}catch(e){}renderSnd();if(on){primeAudio();playDone()}return}
-  if(b.dataset.tab){S.tab=b.dataset.tab;S.open=null;S.confirm=null;if(b.dataset.tab!=="today")S.filter=null;try{history.replaceState(null,"","#"+b.dataset.tab)}catch(e){}render();return}
-  if(b.dataset.alllist!==undefined){S.tab="all";S.allList=b.dataset.alllist||null;S.open=null;S.confirm=null;render();return}
-  if(b.dataset.filter){S.tab="today";S.open=null;S.confirm=null;S.filter=b.dataset.filter==="all"?null:b.dataset.filter;render();return}
+  if(b.dataset.tab){S.tab=b.dataset.tab;S.open=null;S.confirm=null;S.filter=null;if(b.id==="allbtn")S.allList=null;saveHash();render();return}
+  if(b.dataset.alllist!==undefined){S.tab="all";S.allList=b.dataset.alllist||null;S.open=null;S.confirm=null;saveHash();render();return}
   if("clear" in b.dataset){S.filter=null;render();return}
   if(b.dataset.open){S.open=S.open===b.dataset.open?null:b.dataset.open;render();const f=document.querySelector(`[data-log="${S.open}"] input[type=text],[data-log="${S.open}"] .grow input`);if(f)f.focus();return}
   if("clearall" in b.dataset){clearAllTasks();return}
@@ -1431,6 +1438,9 @@ document.addEventListener("input",ev=>{if(ev.target.matches&&ev.target.matches("
 
 /* ---------- boot ---------- */
 S.tab="today";
+function saveHash(){try{history.replaceState(null,"","#"+S.tab+(S.tab==="all"&&S.allList?"/"+S.allList:""))}catch(e){}}
+try{const [h,sub]=decodeURIComponent(location.hash.slice(1)).split("/");const okTab=["today","over","soon","new","ok","all","history","setup"];
+  if(okTab.includes(h)){S.tab=h;if(h==="all"&&LISTS.some(l=>l.k===sub))S.allList=sub}else if(LISTS.some(l=>l.k===h)){S.tab="all";S.allList=h}}catch(e){}
 renderSnd();render();
 (async()=>{
   idle();
