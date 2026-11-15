@@ -391,6 +391,12 @@ header.top{display:flex;flex-direction:column;align-items:stretch;justify-conten
 .pagehead p{grid-column:1/-1;margin:0;font-size:13px;color:var(--ink);opacity:.85}
 /* Today: status filter chips */
 .ibubs{display:flex;flex-wrap:wrap;gap:8px}
+.alltop{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.alltop .edtoggle{margin-left:auto}
+.edtoggle{display:inline-flex;align-items:center;white-space:nowrap;min-height:40px;border-width:2px;border-color:var(--pg);color:var(--pg);font-weight:800}
+.edtoggle.primary{background:var(--pg);border-color:var(--pg);color:var(--pg-fg)}
+body.editing .ibub[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--pg)}
+@media (max-width:640px){.alltop .edtoggle{order:-1;width:100%;justify-content:center}}
 .ibub{display:inline-flex;align-items:center;gap:7px;padding:7px 14px 7px 10px;border:2px solid var(--tc,var(--line));border-radius:999px;background:var(--tc-soft,var(--surface));color:var(--tc,var(--ink));font-weight:700;font-size:14px}
 .ibub .ic{width:17px;height:17px}
 .ibub .bn{font-family:var(--f-mono);font-size:12.5px;font-weight:600;opacity:.8}
@@ -1203,7 +1209,10 @@ function viewStatus(st){const html=LISTS.map(l=>listSection(l.k,[st])).join("");
   return `<div class="empty"><strong>${E[0]}</strong>${E[1]}</div>`}
 function viewAll(){const n=k=>S.tasks.filter(t=>t.list===k&&!t.off&&t.freq!=="Optional").length;
   const bubs=`<div class="ibubs" role="group" aria-label="Interval"><button type="button" class="ibub b-all" id="ab-all" data-alllist="" aria-pressed="${!S.allList}">${ic("all")}All<span class="bn">${S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length}</span></button>${LISTS.map(l=>`<button type="button" class="ibub" id="ab-${l.k}" data-alllist="${l.k}" aria-pressed="${S.allList===l.k}" style="--tc:var(--c-${l.k});--tc-soft:var(--c-${l.k}-soft);--tc-fg:var(--c-${l.k}-fg)">${ic(l.k)}${esc(l.label)}<span class="bn">${n(l.k)}</span></button>`).join("")}</div>`;
-  return bubs+(S.allList?listSection(S.allList,null):LISTS.map(l=>listSection(l.k,null)).join(""))}
+  const ed=S.canWrite?`<button type="button" class="btn edtoggle${S.editTasks?" primary":""}" data-edittasks aria-pressed="${!!S.editTasks}">${S.editTasks?ic("check")+"Done editing":ic("edit")+"Edit tasks"}</button>`:"";
+  const top=`<div class="alltop">${bubs}${ed}</div>`;
+  if(S.editTasks&&S.canWrite)return top+editListsHTML(S.allList);
+  return top+(S.allList?listSection(S.allList,null):LISTS.map(l=>listSection(l.k,null)).join(""))}
 function viewToday(){
   const set=["over","soon","new"];
   const html=LISTS.map(l=>listSection(l.k,set)).join("");
@@ -1279,10 +1288,14 @@ function viewSetup(){
     <div class="chips">${S.team.map(i=>`<span class="chip">${esc(i)}<button data-rmteam="${esc(i)}" aria-label="Remove ${esc(i)}">×</button></span>`).join("")||'<span class="note">No initials yet.</span>'}</div>
     <form class="addline" id="addteam"><div class="field"><label for="newinit">Add initials</label><input id="newinit" maxlength="4" style="width:90px;text-transform:uppercase" required></div><button class="btn primary" type="submit">Add</button></form>
   </div></div>`;
-  const lists=LISTS.map(l=>{
+  const lists=`<div class="section"><div class="sec-head"><h2>Tasks</h2></div><div class="list"><div class="io"><strong>Tasks are edited on the All tasks page</strong><p class="note">Rename tasks, change how often they're due, turn them on or off, drag to reorder, set days, quarters, due-by dates or subtasks, and add new ones.</p><div class="toolbar"><button class="btn primary" type="button" data-goedit>${ic("edit")}Edit tasks</button></div></div></div></div>`;
+  return team+clinicHTML()+rulesHTML()+lists+backupHTML()+`<div class="section"><div class="sec-head"><h2>This device</h2></div><div class="list"><div class="io"><p class="note">Signed in with the office password. Signing out only affects this phone or computer.</p><div class="toolbar"><button class="btn" data-signout>Sign out</button></div></div></div></div>`;
+}
+function editListsHTML(only){
+  return LISTS.filter(l=>!only||l.k===only).map(l=>{
     const ts=sorted().filter(t=>t.list===l.k); if(l.k==="optional")ts.sort(byFreq);
     {const isOff=t=>!!t.off||t.freq==="Optional";const on=ts.filter(t=>!isOff(t)),off=ts.filter(isOff);ts.length=0;ts.push(...on,...off)}
-    return `<div class="section"><div class="sec-head"><h2>${esc(l.title)}</h2></div><div class="list">
+    return `<div class="section">${only?"":`<div class="sec-head"><h2 style="--tc:var(--c-${l.k});--tc-soft:var(--c-${l.k}-soft)"><span class="lic">${ic(l.k)}</span>${esc(l.title)}</h2></div>`}<div class="list">
       ${ts.map(t=>`<div class="setup-row${t.off?" is-off":""}" data-row="${t.id}" data-list="${l.k}" data-grp="${t.off||t.freq==="Optional"?"off":"on"}">
         <button class="grip" type="button" id="gr-${t.id}" aria-label="Drag to reorder ${esc(t.name)}. Arrow keys move it up or down." title="Drag to reorder">${GRIP}</button>
         ${swCell(t)}
@@ -1295,7 +1308,6 @@ function viewSetup(){
         <div class="field"><label for="newf-${l.k}">Frequency</label><select id="newf-${l.k}">${FREQS.map(f=>`<option ${f===l.label?"selected":""}>${f}</option>`).join("")}</select></div>
         <button class="btn primary" type="submit">Add task</button></form>
     </div></div>`}).join("");
-  return team+clinicHTML()+rulesHTML()+lists+backupHTML()+`<div class="section"><div class="sec-head"><h2>This device</h2></div><div class="list"><div class="io"><p class="note">Signed in with the office password. Signing out only affects this phone or computer.</p><div class="toolbar"><button class="btn" data-signout>Sign out</button></div></div></div></div>`;
 }
 function renderBand_unused(){
   const c={over:0,soon:0,ok:0,new:0};S.tasks.forEach(t=>{const s=statusOf(t).s;if(c[s]!=null)c[s]++});
@@ -1316,7 +1328,7 @@ const IC={today:'<path d="M6 9a6 6 0 0 1 12 0c0 6.5 2.5 8.5 2.5 8.5h-17S6 15.5 6
   new:'<circle cx="12" cy="12" r="8.5" stroke-dasharray="3.2 2.6"/>',
   ok:'<circle cx="12" cy="12" r="8.5"/><path d="M8 12.3l2.8 2.8L16.2 9.6"/>',
   all:'<path d="M9 6.5h11M9 12h11M9 17.5h11"/><path d="M4 6.5h.01M4 12h.01M4 17.5h.01"/>',
-  check:'<path d="M4.5 12.5l5 5L19.5 7"/>',chev:'<path d="M6 9l6 6 6-6"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>',reset:'<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.4"/><path d="M3.5 3.5v4.9h4.9"/>'};
+  check:'<path d="M4.5 12.5l5 5L19.5 7"/>',chev:'<path d="M6 9l6 6 6-6"/>',edit:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>',reset:'<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.4"/><path d="M3.5 3.5v4.9h4.9"/>'};
 const ic=n=>IC[n]?`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`:"";
 document.querySelectorAll("[data-ic]").forEach(e=>{e.innerHTML=ic(e.dataset.ic)});
 const PAGES=[["today","Today"],["over","Overdue"],["soon","Due soon"],["new","Not started"],["ok","Completed"]];
@@ -1330,12 +1342,13 @@ function pageHead(C){const h=$("#pageHead");if(!h)return;document.body.dataset.v
   const SUB={daily:"Due each clinic day it's scheduled. Log each one when it's done, or log the whole list at once.",weekly:"Due once a week, or on the day of the week set in Setup.",monthly:"Shows up on the 1st and is due by the end of the month.",quarterly:"Shows up on the first day of each quarter it runs in and is due by the end of that quarter.",yearly:"Due once a year, or by its due-by date."};
   const P=S.tab==="today"?["Today",all?`${needN(C.all)} need attention · ${s(S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length)}`:"","Everything that needs attention today, from every list: overdue, due soon or not started yet. Tick a task's box to log it, or tap ⋯ to add a note or another date."]
     :STATUS_PAGES.includes(S.tab)?[{over:"Overdue",soon:"Due soon",new:"Not started",ok:"Completed"}[S.tab],all?s(C.all[S.tab]):"",{over:"Past due. Log these first.",soon:"Coming due soon: inside each frequency's due soon window (Setup › Schedule rules).",new:"Not logged yet, or not done since a reset. Monthly and quarterly tasks also wait here from the 1st until they're due soon.",ok:"Done for now: logged and not due again yet."}[S.tab]]
+    :S.tab==="all"&&S.editTasks?["Edit tasks",all?(()=>{const ts=S.tasks.filter(t=>L?t.list===L.k:LISTS.some(l=>l.k===t.list)),on=ts.filter(t=>!t.off&&t.freq!=="Optional").length,off=ts.length-on;return (L?L.title+" · ":"")+`${on} on`+(off?` · ${off} off`:"")})():"","Rename tasks, change how often they're due, turn them on or off, drag ⠿ to reorder, set days, quarters, due-by dates or subtasks, and add new ones. Changes save as you go."]
     :S.tab==="all"?["All tasks",all?(L?`${L.title} · ${s(lt(L.k))}`:s(S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length)):"",L?SUB[L.k]||"":"Every task that's turned on, grouped by how often it's due. Tap an interval to see just that list."]
     :S.tab==="history"?["Log",S.loaded.l?(()=>{const n=S.log.length+(S.older||[]).length,more=!S.olderDone&&S.log.length>=1000;return `${n}${more?"+":""} entr${n===1&&!more?"y":"ies"}`})():"","Every task logged, newest first. Search it, export it, or remove a mistaken entry."]
     :S.tab==="setup"?["Setup","","Team, clinic days, schedule rules, tasks, logo, appearance and backups."]
     :null;
   h.hidden=!P;if(!P)return;
-  $("#phIcon").innerHTML=ic(L?L.k:S.tab);$("#phTitle").textContent=P[0];$("#phN").textContent=P[1];$("#phSub").textContent=P[2]}
+  $("#phIcon").innerHTML=ic(S.tab==="all"&&S.editTasks?"edit":L?L.k:S.tab);document.body.classList.toggle("editing",S.tab==="all"&&!!S.editTasks);$("#phTitle").textContent=P[0];$("#phN").textContent=P[1];$("#phSub").textContent=P[2]}
 function renderSetupBtn(){for(const [id,t] of [["setupbtn","setup"],["logbtn","history"],["allbtn","all"]]){const b=document.getElementById(id);if(b)b.setAttribute("aria-pressed",String(S.tab===t))}}
 function renderTabs(C){renderSetupBtn();C=C||statusCounts();const ready=S.loaded.t;
   $("#tabs").innerHTML=PAGES.map(([k,l])=>{const n=ready?(k==="today"?needN(C.all):C.all[k]):null;
@@ -1386,10 +1399,12 @@ document.addEventListener("click",async ev=>{
     try{await S.db.doc("settings/logo-"+(k==="l"?"light":"dark")).delete();S.logo[k]=null;applyLogo();render();toast(k==="l"?"Back to the default logo.":"Dark mode logo removed.")}catch(e){writeFail(e)}return}
   if(b.dataset.settheme){setTheme(b.dataset.settheme);return}
   if(b.id==="snd"){const on=!soundOn();try{localStorage.setItem("tdc-sound",on?"on":"off")}catch(e){}renderSnd();if(on){primeAudio();playDone()}return}
-  if(b.dataset.tab){S.tab=b.dataset.tab;S.open=null;S.confirm=null;S.filter=null;if(b.id==="allbtn")S.allList=null;saveHash();render();return}
+  if(b.dataset.tab){S.tab=b.dataset.tab;S.open=null;S.confirm=null;S.filter=null;if(S.tab!=="all")S.editTasks=false;if(b.id==="allbtn")S.allList=null;saveHash();render();return}
   if(b.dataset.alllist!==undefined){S.tab="all";S.allList=b.dataset.alllist||null;S.open=null;S.confirm=null;saveHash();render();return}
   if("clear" in b.dataset){S.filter=null;render();return}
   if(b.dataset.jump){const el=document.getElementById(b.dataset.jump);if(el)el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});return}
+  if(b.dataset.edittasks!==undefined){S.editTasks=!S.editTasks;S.confirm=null;saveHash();render();return}
+  if(b.dataset.goedit!==undefined){S.tab="all";S.editTasks=true;S.open=null;S.confirm=null;saveHash();render();scrollTo(0,0);return}
   if(b.dataset.collapse){colToggle(b.dataset.collapse);render();return}
   if(b.dataset.quick){const id=b.dataset.quick;if(!getMe()){toast("Pick your initials at the top first.");return}
     if(b.classList.contains("ticking"))return;primeAudio();b.classList.add("ticking");sparkle(b.querySelector(".dbx"));
@@ -1514,8 +1529,8 @@ document.addEventListener("input",ev=>{if(ev.target.matches&&ev.target.matches("
 
 /* ---------- boot ---------- */
 S.tab="today";
-function saveHash(){try{history.replaceState(null,"","#"+S.tab+(S.tab==="all"&&S.allList?"/"+S.allList:""))}catch(e){}}
-try{const [h,sub]=decodeURIComponent(location.hash.slice(1)).split("/");const okTab=["today","over","soon","new","ok","all","history","setup"];
+function saveHash(){try{history.replaceState(null,"","#"+S.tab+(S.tab==="all"&&S.allList?"/"+S.allList:"")+(S.tab==="all"&&S.editTasks?"/edit":""))}catch(e){}}
+try{const parts=decodeURIComponent(location.hash.slice(1)).split("/"),[h,sub]=parts;if(h==="all"&&parts.includes("edit"))S.editTasks=true;const okTab=["today","over","soon","new","ok","all","history","setup"];
   if(okTab.includes(h)){S.tab=h;if(h==="all"&&LISTS.some(l=>l.k===sub))S.allList=sub}else if(LISTS.some(l=>l.k===h)){S.tab="all";S.allList=h}}catch(e){}
 renderSnd();render();
 (async()=>{
