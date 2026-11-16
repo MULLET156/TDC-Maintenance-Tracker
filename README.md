@@ -61,6 +61,16 @@ The repository ships with a neutral "Your logo here" placeholder. To use your ow
 
 Edit the files and push to `main`. With auto deployment on, Hostinger picks the change up within a minute or two; otherwise click **Deploy** in hPanel → GIT. `config.php` and the database are never touched by a deploy.
 
+## Dental Dashboard tiles
+
+The Dental Dashboard can show two tiles from this tracker: **Overdue maintenance** and **Due this week**. They show only task names, how often each is due, dates and counts. They are turned off until you set them up:
+
+1. Make a long random value (a password generator, 64 characters).
+2. In Hostinger **File Manager**, open `config.php` and put it in `define('TILE_TOKEN', '...');` (copy the lines from `config.sample.php` if they are missing).
+3. Give the same value to the Dental Dashboard in its settings, with the tile addresses `https://<this site>/tdc/tiles/overdue` and `https://<this site>/tdc/tiles/due-week`.
+
+Only the Dashboard's server can read the tiles: without the right value the tracker answers "not allowed" and shows nothing. The numbers are kept up to date by the tracker page itself, so they refresh whenever someone has the tracker open after logging a task or changing one.
+
 ## Backups
 
 Use **Setup → Import & export → Full backup** regularly (for example monthly) and keep the file somewhere safe. Hostinger's own backups (**Files → Backups**) also cover the database.
