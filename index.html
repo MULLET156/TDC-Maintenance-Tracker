@@ -3,7 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}/* colour-coded header buttons, the same in all three apps: lists = navy, new = the app colour, log = olive, setup = grey */
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0E6B73">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Maintenance">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>TDC Maintenance Tracker</title>
+<meta name="description" content="Toledo Dental Care maintenance checklists and completion log.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230E6B73%27/%3E%3Cpath d=%27M9 16.5l4.5 4.5L23 11%27 fill=%27none%27 stroke=%27white%27 stroke-width=%273.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
+<style>/* colour-coded header buttons, the same in all three apps: lists = navy, new = the app colour, log = olive, setup = grey */
 :root{--hb-nav:#1c3466;--hb-nav-soft:#dfe6f4;--hb-log:#4E5833;--hb-log-soft:#e5e9d8;--hb-set:#46575B;--hb-set-soft:#E4EAEA;--hb-fg:#ffffff}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--hb-nav:#93b4ff;--hb-nav-soft:#1d2a44;--hb-log:#b5c48a;--hb-log-soft:#2a3322;--hb-set:#b7c4c6;--hb-set-soft:#26343a;--hb-fg:#111a1d}}
 :root[data-theme="dark"]{--hb-nav:#93b4ff;--hb-nav-soft:#1d2a44;--hb-log:#b5c48a;--hb-log-soft:#2a3322;--hb-set:#b7c4c6;--hb-set-soft:#26343a;--hb-fg:#111a1d}
@@ -16,16 +27,6 @@
 :root:not([data-theme="arcade"]):not([data-theme="quest"]) .hbar #setupbtn{border:1.5px solid var(--hb-set);background:var(--hb-set-soft);color:var(--hb-set)}
 :root:not([data-theme="arcade"]):not([data-theme="quest"]) .hbar #setupbtn[aria-pressed="true"]{background:var(--hb-set);border-color:var(--hb-set);color:var(--hb-fg)}
 </style>
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#0E6B73">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-title" content="Maintenance">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>TDC Maintenance Tracker</title>
-<meta name="description" content="Toledo Dental Care maintenance checklists and completion log.">
-<meta name="robots" content="noindex, nofollow">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230E6B73%27/%3E%3Cpath d=%27M9 16.5l4.5 4.5L23 11%27 fill=%27none%27 stroke=%27white%27 stroke-width=%273.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
@@ -445,6 +446,12 @@ header.top{display:flex;flex-direction:column;align-items:stretch;justify-conten
 .pagehead h2{margin:0;font-family:var(--f-display);font-stretch:85%;font-weight:800;font-size:clamp(21px,3.6vw,26px);line-height:1.05;color:var(--pg)}
 .pagehead .phn{font-family:var(--f-mono);font-weight:600;font-size:13px;color:var(--pg);white-space:nowrap}
 .pagehead p{grid-column:1/-1;margin:0;font-size:13px;color:var(--ink);opacity:.85}
+.pagehead .pht{display:flex;align-items:center;gap:8px;min-width:0}
+.pagehead .pht h2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.phinfo{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;padding:0;border:1.5px solid var(--pg);border-radius:50%;background:transparent;color:var(--pg);font:italic 700 13px/1 Georgia,"Times New Roman",serif;cursor:pointer;opacity:.8;position:relative}
+.phinfo::after{content:"";position:absolute;inset:-11px}
+.phinfo:hover,.phinfo[aria-expanded="true"]{opacity:1;background:var(--pg);color:var(--pg-fg)}
+.pagehead p[hidden]{display:none}
 /* Today: status filter chips */
 .ibubs{display:flex;flex-wrap:wrap;gap:5px}
 .edtoggle{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:7px 10px 7px 8px;border:2px dashed var(--ink);border-radius:999px;background:var(--surface);color:var(--ink);font-weight:800;font-size:13.5px}
@@ -528,7 +535,8 @@ body.editing .ibub[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 
   .seglbl{display:none}
   .seg button{padding:7px 10px}
   .pagehead{padding:5px 10px;border-left-width:5px;border-radius:9px;column-gap:8px;grid-template-columns:auto minmax(0,1fr) auto}
-  .pagehead p,.pagehead .phx{display:none}
+  .pagehead .phx{display:none}
+  .phinfo{width:20px;height:20px;font-size:12px}
   .pagehead h2{font-size:17px}
   .pagehead .phi .ic{width:18px;height:18px}
   .pagehead .phn{font-size:12px;white-space:nowrap;justify-self:end;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
@@ -619,20 +627,6 @@ body.editing .ibub[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 
 @media (max-width:560px){.row .act.wide{grid-column:2/-1;justify-content:flex-start;padding:0 12px 10px 14px}}
 .confirm{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
 @media (prefers-reduced-motion:no-preference){.panel{animation:drop .16s ease-out}@keyframes drop{from{opacity:.4;transform:translateY(-3px)}}}
-#signin{position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));overflow:auto}
-.sg-card{width:min(380px,100%);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:26px 22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 12px 32px rgba(0,0,0,.08)}
-.sg-brand{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px}
-.sg-brand .logo{margin:0 0 6px}
-.sg-brand .logo img{height:96px;width:auto;margin:0 auto}
-.sg-brand h1{margin:0;font-family:var(--f-display);font-stretch:80%;font-weight:800;font-size:28px;line-height:1.05}
-.sg-brand p{margin:0;color:var(--muted);font-size:14px}
-#signinForm{display:flex;flex-direction:column;gap:10px}
-#signinForm label{font-size:13px;font-weight:600;color:var(--muted)}
-#signinForm input{border:1px solid var(--line);background:var(--sunk);border-radius:9px;padding:11px 12px;font-size:16px}
-#signinForm button{min-height:44px;font-size:15px}
-#signinMsg{min-height:1.2em;margin:0;color:var(--over);font-size:13.5px;font-weight:600}
-.sg-note{margin:0;font-size:12.5px;color:var(--muted)}
-
 /* desktop: same width and header layout as the Supply Room — logo | app name centred in the space left | buttons */
 @media (min-width:1100px){.wrap{max-width:1140px}}
 @media (min-width:1100px){
@@ -657,6 +651,19 @@ header.top>.tdc-line{position:absolute;left:-100vmax;right:-100vmax;bottom:-4px;
 body[data-view]{background-color:var(--bg)!important}
 @media (max-width:640px){header.top{box-shadow:none!important;clip-path:none!important;margin-bottom:0!important;border-bottom:4px solid var(--pg)!important}}
 :root[data-theme="arcade"] header.top,:root[data-theme="quest"] header.top{box-shadow:none!important;clip-path:none!important}
+#signin{position:fixed;inset:0;z-index:50;background:var(--bg);display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));overflow:auto}
+.sg-card{width:min(380px,100%);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:26px 22px;display:flex;flex-direction:column;gap:16px;box-shadow:0 12px 32px rgba(0,0,0,.08)}
+.sg-brand{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px}
+.sg-brand .logo{margin:0 0 6px}
+.sg-brand .logo img{height:96px;width:auto;margin:0 auto}
+.sg-brand h1{margin:0;font-family:var(--f-display);font-stretch:80%;font-weight:800;font-size:28px;line-height:1.05}
+.sg-brand p{margin:0;color:var(--muted);font-size:14px}
+#signinForm{display:flex;flex-direction:column;gap:10px}
+#signinForm label{font-size:13px;font-weight:600;color:var(--muted)}
+#signinForm input{border:1px solid var(--line);background:var(--sunk);border-radius:9px;padding:11px 12px;font-size:16px}
+#signinForm button{min-height:44px;font-size:15px}
+#signinMsg{min-height:1.2em;margin:0;color:var(--over);font-size:13.5px;font-weight:600}
+.sg-note{margin:0;font-size:12.5px;color:var(--muted)}
 </style>
 
 </head>
@@ -676,6 +683,7 @@ body[data-view]{background-color:var(--bg)!important}
       <div class="hdr-row">
         <button class="soundbtn iconbtn" id="themeBtn" type="button" aria-label="Switch theme"></button>
         <button class="soundbtn iconbtn" id="snd" type="button"></button>
+
         <div class="sync" role="status"><span class="dot busy" id="dot"></span><span id="syncTxt">Connecting…</span></div>
         <div class="whoami">
           <label for="who" title="Logging as"><span class="hic" data-ic="user"></span><span class="wlbl">Logging as</span></label>
@@ -691,7 +699,7 @@ body[data-view]{background-color:var(--bg)!important}
     </div>
    </div>
    <nav class="ptabs" role="tablist" id="tabs" aria-label="Pages"></nav>
-   <div class="pagehead" id="pageHead"><span class="phi" id="phIcon" aria-hidden="true"></span><h2 id="phTitle"></h2><span class="phn" id="phN"></span><p id="phSub"></p></div>
+   <div class="pagehead" id="pageHead"><span class="phi" id="phIcon" aria-hidden="true"></span><div class="pht"><h2 id="phTitle"></h2><button type="button" class="phinfo" id="phInfo" data-phinfo aria-expanded="false" aria-controls="phSub" aria-label="About this page" title="About this page">i</button></div><span class="phn" id="phN"></span><p id="phSub" hidden></p></div>
    <div class="findbar" id="findBar"><input id="tq" type="search" placeholder="Search tasks and subtasks…" aria-label="Search tasks" autocomplete="off" enterkeyhint="search"><select id="tfreq" aria-label="Show frequency"><option value="">All frequencies</option></select></div>
   </header>
 
@@ -1488,7 +1496,7 @@ function pageHead(C){const h=$("#pageHead");if(!h)return;document.body.dataset.v
     :S.tab==="setup"?["Setup","","Team, clinic days, schedule rules, tasks, logo, appearance and backups."]
     :null;
   h.hidden=!P;if(!P)return;
-  $("#phIcon").innerHTML=ic(S.tab==="all"&&S.editTasks?"edit":L?L.k:S.tab);document.body.classList.toggle("editing",S.tab==="all"&&!!S.editTasks);$("#phTitle").textContent=P[0];{const [h,...r]=String(P[1]||"").split(" · ");$("#phN").innerHTML=esc(h)+(r.length?`<span class="phx"> · ${esc(r.join(" · "))}</span>`:"")}$("#phSub").textContent=P[2]}
+  $("#phIcon").innerHTML=ic(S.tab==="all"&&S.editTasks?"edit":L?L.k:S.tab);document.body.classList.toggle("editing",S.tab==="all"&&!!S.editTasks);$("#phTitle").textContent=P[0];{const [h,...r]=String(P[1]||"").split(" · ");$("#phN").innerHTML=esc(h)+(r.length?`<span class="phx"> · ${esc(r.join(" · "))}</span>`:"")}{const sub=$("#phSub"),inf=$("#phInfo");sub.textContent=P[2]||"";inf.hidden=!P[2];if(S.phTab!==S.tab+"|"+(S.allList||"")+"|"+!!S.editTasks){S.phTab=S.tab+"|"+(S.allList||"")+"|"+!!S.editTasks;sub.hidden=true;inf.setAttribute("aria-expanded","false")}}}
 function renderSetupBtn(){for(const [id,t] of [["setupbtn","setup"],["logbtn","history"],["allbtn","all"]]){const b=document.getElementById(id);if(b)b.setAttribute("aria-pressed",String(S.tab===t))}}
 function renderTabs(C){renderSetupBtn();C=C||statusCounts();const ready=S.loaded.t;
   $("#tabs").innerHTML=PAGES.map(([k,l])=>{const n=ready?(k==="today"?needN(C.all):C.all[k]):null;
@@ -1531,12 +1539,13 @@ function render(){
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("button"); if(!b)return;
   if("signout" in b.dataset){TDC.logout();return}
+  if("expbackup" in b.dataset){exportBackup();return}
+  if("phinfo" in b.dataset){const sub=$("#phSub"),open=sub.hidden;sub.hidden=!open;b.setAttribute("aria-expanded",String(open));return}
   if("more" in b.dataset){openMore();return}
   if("newtask" in b.dataset){S.tab="all";S.editTasks=true;S.open=null;S.confirm=null;saveHash();render();const f=document.getElementById("new-"+(S.allList||"daily"));if(f){f.scrollIntoView({block:"center"});f.focus()}return}
   if(b.dataset.moreGo){const k=b.dataset.moreGo;closeMore();({new:()=>$("#newbtn").click(),all:()=>$("#allbtn").click(),history:()=>$("#logbtn").click(),setup:()=>$("#setupbtn").click(),theme:()=>$("#themeBtn").click(),snd:()=>$("#snd").click()}[k]||(()=>{}))();return}
   if(b.dataset.grp){S.grp=b.dataset.grp;try{localStorage.setItem("tdc-grp",S.grp)}catch(e){}render();return}
   if("clearfind" in b.dataset){S.q="";S.ff="";$("#tq").value="";$("#tfreq").value="";render();return}
-  if("expbackup" in b.dataset){exportBackup();return}
   if("exptasks" in b.dataset){exportTasks();return}
   if("impgo" in b.dataset){applyImport();return}
   if("impcancel" in b.dataset){S.imp=null;S.impRemove=false;render();return}
