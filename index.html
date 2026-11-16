@@ -305,6 +305,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-
   --c-monthly:#7B36B5;--c-monthly-soft:#F1E6FA;--c-monthly-fg:#fff;
   --c-quarterly:#A02A72;--c-quarterly-soft:#F9E3F0;--c-quarterly-fg:#fff;
   --c-yearly:#2E4756;--c-yearly-soft:#E2EAEE;--c-yearly-fg:#fff;
+  --c-downtime:#7A4E2A;--c-downtime-soft:#F4EAE0;--c-downtime-fg:#fff;
   --c-history:#4E5833;--c-history-soft:#E5E9D8;--c-history-fg:#fff;
   --c-setup:#46575B;--c-setup-soft:#E4EAEA;--c-setup-fg:#fff}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="arcade"]):not([data-theme="quest"]){
@@ -314,6 +315,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-
   --c-monthly:#CFA0F2;--c-monthly-soft:#2E1F3C;--c-monthly-fg:#1C1026;
   --c-quarterly:#F08CC8;--c-quarterly-soft:#3A1A2E;--c-quarterly-fg:#2A0F1F;
   --c-yearly:#A8C2D0;--c-yearly-soft:#1E2C33;--c-yearly-fg:#0F1A1F;
+  --c-downtime:#DDB089;--c-downtime-soft:#33251A;--c-downtime-fg:#1E130A;
   --c-history:#A9BA7E;--c-history-soft:#2A3322;--c-history-fg:#141B10;
   --c-setup:#A9B8BB;--c-setup-soft:#1E2B2E;--c-setup-fg:#0F1A1C}}
 :root[data-theme="dark"]{
@@ -323,6 +325,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-
   --c-monthly:#CFA0F2;--c-monthly-soft:#2E1F3C;--c-monthly-fg:#1C1026;
   --c-quarterly:#F08CC8;--c-quarterly-soft:#3A1A2E;--c-quarterly-fg:#2A0F1F;
   --c-yearly:#A8C2D0;--c-yearly-soft:#1E2C33;--c-yearly-fg:#0F1A1F;
+  --c-downtime:#DDB089;--c-downtime-soft:#33251A;--c-downtime-fg:#1E130A;
   --c-history:#A9BA7E;--c-history-soft:#2A3322;--c-history-fg:#141B10;
   --c-setup:#A9B8BB;--c-setup-soft:#1E2B2E;--c-setup-fg:#0F1A1C}
 body{--pg:var(--accent);--pg-soft:var(--accent-soft);--pg-fg:var(--accent-ink)}
@@ -337,6 +340,7 @@ body[data-view="weekly"]{--pg:var(--c-weekly);--pg-soft:var(--c-weekly-soft);--p
 body[data-view="monthly"]{--pg:var(--c-monthly);--pg-soft:var(--c-monthly-soft);--pg-fg:var(--c-monthly-fg)}
 body[data-view="quarterly"]{--pg:var(--c-quarterly);--pg-soft:var(--c-quarterly-soft);--pg-fg:var(--c-quarterly-fg)}
 body[data-view="yearly"]{--pg:var(--c-yearly);--pg-soft:var(--c-yearly-soft);--pg-fg:var(--c-yearly-fg)}
+body[data-view="downtime"]{--pg:var(--c-downtime);--pg-soft:var(--c-downtime-soft);--pg-fg:var(--c-downtime-fg)}
 body[data-view="history"]{--pg:var(--c-history);--pg-soft:var(--c-history-soft);--pg-fg:var(--c-history-fg)}
 body[data-view="setup"]{--pg:var(--c-setup);--pg-soft:var(--c-setup-soft);--pg-fg:var(--c-setup-fg)}
 html{overflow-x:clip}
@@ -390,17 +394,29 @@ header.top{display:flex;flex-direction:column;align-items:stretch;justify-conten
 .pagehead .phn{font-family:var(--f-mono);font-weight:600;font-size:13px;color:var(--pg);white-space:nowrap}
 .pagehead p{grid-column:1/-1;margin:0;font-size:13px;color:var(--ink);opacity:.85}
 /* Today: status filter chips */
-.ibubs{display:flex;flex-wrap:wrap;gap:8px}
-.edtoggle{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:7px 12px 7px 10px;border:2px dashed var(--ink);border-radius:999px;background:var(--surface);color:var(--ink);font-weight:800;font-size:14px}
+.ibubs{display:flex;flex-wrap:wrap;gap:5px}
+.edtoggle{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:7px 10px 7px 8px;border:2px dashed var(--ink);border-radius:999px;background:var(--surface);color:var(--ink);font-weight:800;font-size:13.5px}
 .edtoggle .ic{width:16px;height:16px}
 .edtoggle:hover{border-style:solid}
 .edtoggle.on{background:var(--ink);border:2px solid var(--ink);color:var(--surface)}
 body.editing .ibub[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--pg)}
 @media (max-width:640px){.edtoggle{padding:6px 11px 6px 9px;font-size:13px}}
-.ibub{display:inline-flex;align-items:center;gap:5px;padding:7px 12px 7px 9px;border:2px solid var(--tc,var(--line));border-radius:999px;background:var(--tc-soft,var(--surface));color:var(--tc,var(--ink));font-weight:700;font-size:14px}
+.ibub{display:inline-flex;align-items:center;gap:4px;padding:7px 9px 7px 7px;border:2px solid var(--tc,var(--line));border-radius:999px;background:var(--tc-soft,var(--surface));color:var(--tc,var(--ink));font-weight:700;font-size:13.5px}
 .ibub .ic{width:17px;height:17px}
 .ibub .bn{font-family:var(--f-mono);font-size:12.5px;font-weight:600;opacity:.8}
 .ibub[aria-pressed="true"]{background:var(--tc,var(--ink));color:var(--tc-fg,var(--surface));box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
+:root{--dt:var(--c-downtime);--dt-soft:var(--c-downtime-soft)}
+.dtcard{border:2px solid var(--dt);border-radius:14px;background:var(--dt-soft);padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.dtcard .dthead{display:flex;gap:12px;align-items:flex-start}
+.dtcard .dthead h2{margin:0;font-size:17px;color:var(--dt)}
+.dtcard .dthead .note{margin:2px 0 0}
+.dtcard .lic{color:var(--dt);display:inline-flex}
+.dtcard .lic .ic{width:22px;height:22px}
+.dtcard .toolbar{margin:0}
+.dtgo{border:2px solid var(--dt);color:var(--dt);font-weight:800;display:inline-flex;align-items:center;gap:6px;background:var(--surface)}
+.dtcard.slim{flex-direction:row;align-items:center;flex-wrap:wrap;padding:10px 14px;border-style:dashed}
+.dtcard.slim .dtt{flex:1;min-width:180px;font-weight:700;color:var(--ink)}
+.row[data-s=dt]{--c:var(--c-downtime)} .row[data-s=dt] .pill{--cs:var(--c-downtime-soft)}
 .ibub.b-all{--tc:var(--c-daily);--tc-soft:var(--surface);--tc-fg:var(--c-daily-fg)}
 @media (max-width:640px){.ibub{padding:6px 11px 6px 8px;font-size:13px}}
 .schips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
@@ -714,8 +730,8 @@ window.TDC=(function(){
 (function(){
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const LISTS=[{k:"daily",label:"Daily",title:"Daily"},{k:"weekly",label:"Weekly",title:"Weekly"},{k:"monthly",label:"Monthly",title:"Monthly"},{k:"quarterly",label:"Quarterly",title:"Quarterly"},{k:"yearly",label:"Yearly",title:"Yearly"}];
-const FREQS=["Daily","Weekly","Monthly","Quarterly","Yearly"];
+const LISTS=[{k:"daily",label:"Daily",title:"Daily"},{k:"weekly",label:"Weekly",title:"Weekly"},{k:"monthly",label:"Monthly",title:"Monthly"},{k:"quarterly",label:"Quarterly",title:"Quarterly"},{k:"yearly",label:"Yearly",title:"Yearly"},{k:"downtime",label:"Downtime",title:"Downtime"}];
+const FREQS=["Daily","Weekly","Monthly","Quarterly","Yearly","Downtime"];
 const DEF_RULE={Daily:{d:1,soon:0},Weekly:{d:7,soon:2},Monthly:{m:1,soon:7},Quarterly:{m:3,soon:14},Yearly:{m:12,soon:30}};
 let RULE={...DEF_RULE};
 const TABS=[["daily","Daily"],["weekly","Weekly"],["monthly","Monthly"],["quarterly","Quarterly"],["yearly","Yearly"]];
@@ -814,6 +830,7 @@ function lastFor(t){
   return best;
 }
 function statusOf(t){
+  if(t.freq==="Downtime"&&!t.off){const last=lastFor(t);if(!last)return{s:"dt",label:"Never done",last:null};const d=dayDiff(parse(last.date),new Date());return{s:"dt",label:d<1?"Done today":d<60?d+" day"+(d===1?"":"s")+" ago":Math.round(d/30.4)+" months ago",last,ago:d}}
   if(t.off||t.freq==="Optional"||!RULE[t.freq])return{s:"opt",label:t.list==="optional"?"Off":"Optional"};
   const last=lastFor(t);
   if(!last&&offQuarter(t)){const n=firstOpen(selPer(perStart(new Date(),3),3,ownQs(t),1));return{s:"wait",label:"Starts in "+QN[qOf(n)-1],last:null,next:iso(n),diff:dayDiff(new Date(),n)}}
@@ -825,7 +842,8 @@ function statusOf(t){
   return{s,label,last,next:iso(next),diff};
 }
 const sorted=()=>S.tasks.slice().sort((a,b)=>(a.order??0)-(b.order??0));
-const FRANK={Daily:0,Weekly:1,Monthly:2,Quarterly:3,Yearly:4};
+const FRANK={Daily:0,Weekly:1,Monthly:2,Quarterly:3,Yearly:4,Downtime:5};
+const byDowntime=(a,b)=>{const x=lastFor(a),y=lastFor(b);return (x?1:0)-(y?1:0)||((x&&y)?x.date.localeCompare(y.date):0)||((a.order??0)-(b.order??0))};
 const byFreq=(a,b)=>((FRANK[a.trackFreq||"Monthly"]??2)-(FRANK[b.trackFreq||"Monthly"]??2))||((a.order??0)-(b.order??0));
 
 /* ---------- initials ---------- */
@@ -1114,7 +1132,7 @@ function backupHTML(){const p=S.imp;let prev="";
     <div class="io"><strong>Import</strong><p class="note">Choose a full backup (.json) to restore it, or a task list (.csv) with Task, Frequency, Status and (optionally) Days, Due by and Subtasks columns to add or update tasks. You'll see what will change before anything is saved.</p>
       <div class="toolbar"><input type="file" id="impfile" class="vh" accept=".json,.csv,application/json,text/csv"><label class="btn" for="impfile">Choose file…</label></div>${prev}</div>
   </div></div>${S.confirm==="clearall"?clearDialogHTML():""}${S.confirm==="resetall"?resetDialogHTML():""}`}
-function doneCount(){return S.tasks.filter(t=>!t.off&&t.freq!=="Optional"&&!["new","opt"].includes(statusOf(t).s)).length}
+function doneCount(){return S.tasks.filter(t=>!t.off&&t.freq!=="Optional"&&!["new","opt","dt"].includes(statusOf(t).s)).length}
 function resetAllHTML(){const n=doneCount();
   return `<div class="section"><div class="sec-head"><h2>Reset &amp; delete tasks</h2></div><div class="list">
     <div class="io"><strong>Mark all tasks not done</strong><p class="note">Every task in every section goes back to not done, the same as using Reset on each section. The completion log keeps its history; past entries just stop counting toward what's due.</p>
@@ -1125,7 +1143,7 @@ function resetAllHTML(){const n=doneCount();
 function resetDialogHTML(){const n=doneCount();
   return `<div class="modal" role="presentation"><div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="rstT" aria-describedby="rstD"><h3 id="rstT">Mark all tasks not done?</h3><p id="rstD">${n} task${n===1?" is":"s are"} marked done right now. Every task in Daily, Weekly, Monthly, Quarterly and Yearly will go back to not done and show under Needs attention. The completion log keeps its history.</p><div class="toolbar dlg-actions"><button class="btn ghost" data-cancel id="rstNo">Cancel</button><button class="btn danger solid" data-resetall ${S.clearing?"disabled":""}>${S.clearing?"Updating…":"Yes, mark all not done"}</button></div></div></div>`}
 async function resetAllTasks(){if(S.clearing)return;S.clearing=true;render();
-  const now=new Date().toISOString(),rz={...S.resets};LISTS.forEach(l=>{rz[l.k]=now});
+  const now=new Date().toISOString(),rz={...S.resets};LISTS.forEach(l=>{if(l.k!=="downtime")rz[l.k]=now});
   const done=S.tasks.filter(t=>t.lastDone),n=doneCount();
   try{if(window.TDC&&TDC.batch)await TDC.batch([{op:"set",col:"settings",id:"resets",data:rz},...done.map(t=>({op:"update",col:"tasks",id:t.id,data:{lastDone:null}}))]);
     else{await S.db.doc("settings/resets").set(rz);for(const t of done)await S.db.doc("tasks/"+t.id).update({lastDone:null})}
@@ -1191,15 +1209,16 @@ function listSection(k,filterSet){
   let tasks=sorted().filter(t=>t.list===k&&!t.off);
   if(filterSet)tasks=tasks.filter(t=>filterSet.includes(statusOf(t).s));
   if(k==="optional")tasks.sort(byFreq);
+  if(k==="downtime")tasks.sort(byDowntime);
   const groupOpen=S.open==="all-"+k;
-  const canAct=S.canWrite&&!filterSet&&tasks.length&&k!=="optional";
+  const canAct=S.canWrite&&!filterSet&&tasks.length&&k!=="optional"&&k!=="downtime";
   const resetBtn=S.confirm==="reset-"+k?`<span class="confirm">Mark all ${k} tasks not done? <button class="btn danger" data-reset="${k}">Reset</button><button class="btn ghost" data-cancel>Cancel</button></span>`:`<button class="btn ghost" data-ask="reset-${k}">Reset ${k} tasks</button>`;
   const own=S.tab==="all"&&S.allList===k,tools=canAct?`<div class="toolbar">${resetBtn}<button class="btn" data-open="all-${k}">${groupOpen?"Close":ic("check")+"Log all "+k+" tasks"}</button></div>`:"";
   const ck=S.tab+":"+k,col=colGet(ck);
   const head=own?(tools?`<div class="sec-head tools-only">${tools}</div>`:""):`<div class="sec-head"><h2 style="--tc:var(--c-${k});--tc-soft:var(--c-${k}-soft)"><button type="button" class="secbtn" id="sec-${ck.replace(":","-")}" data-collapse="${ck}" aria-expanded="${!col}"><span class="lic">${ic(k)}</span>${esc(meta.title)}<span class="seccount">${tasks.length}</span><span class="chev">${ic("chev")}</span></button></h2>${col?"":tools}</div>`;
   if(!own&&col&&tasks.length)return `<div class="section collapsed">${head}</div>`;
   const gp=groupOpen?`<div class="list" style="margin-bottom:2px">${panelHTML(null,k)}</div>`:"";
-  if(!tasks.length)return filterSet?"":`<div class="section">${head}<div class="empty">No ${k} tasks yet. Add them under Setup.</div></div>`;
+  if(!tasks.length)return filterSet?"":`<div class="section">${head}<div class="empty">${k==="downtime"?"<strong>No downtime chores yet</strong>Add deep-clean and catch-up chores with Edit tasks: things to do on a slow day or during a closure. They have no due date; the ones done longest ago rise to the top.":`No ${k} tasks yet. Tap Edit tasks to add some.`}</div></div>`;
   const hint=k==="optional"&&!filterSet&&S.canWrite?`<p class="note" style="margin:0">Turn tasks on or off on the Setup page. A task that's on moves into the section for its frequency and gets due dates; turning one off sends it back here.</p>`:"";
   return `<div class="section">${head}${hint}${gp}<div class="list">${tasks.map(rowHTML).join("")}</div></div>`;
 }
@@ -1209,7 +1228,7 @@ function viewStatus(st){const html=LISTS.map(l=>listSection(l.k,[st])).join("");
   return `<div class="empty"><strong>${E[0]}</strong>${E[1]}</div>`}
 function viewAll(){const n=k=>S.tasks.filter(t=>t.list===k&&!t.off&&t.freq!=="Optional").length;
   const bubs=`<div class="ibubs" role="group" aria-label="Interval"><button type="button" class="ibub b-all" id="ab-all" data-alllist="" aria-pressed="${!S.allList}">${ic("all")}All<span class="bn">${S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length}</span></button>${LISTS.map(l=>`<button type="button" class="ibub" id="ab-${l.k}" data-alllist="${l.k}" aria-pressed="${S.allList===l.k}" style="--tc:var(--c-${l.k});--tc-soft:var(--c-${l.k}-soft);--tc-fg:var(--c-${l.k}-fg)">${ic(l.k)}${esc(l.label)}<span class="bn">${n(l.k)}</span></button>`).join("")}</div>`;
-  const ed=S.canWrite?`<button type="button" class="edtoggle${S.editTasks?" on":""}" data-edittasks aria-pressed="${!!S.editTasks}">${S.editTasks?ic("check")+"Done editing":ic("edit")+"Edit tasks"}</button>`:"";
+  const ed=S.canWrite?`<button type="button" class="edtoggle${S.editTasks?" on":""}" data-edittasks aria-pressed="${!!S.editTasks}" aria-label="${S.editTasks?"Done editing tasks":"Edit tasks"}">${S.editTasks?ic("check")+"Done":ic("edit")+"Edit"}</button>`:"";
   const top=bubs.replace(/<\/div>$/,ed+"</div>");
   if(S.editTasks&&S.canWrite)return top+editListsHTML(S.allList);
   return top+(S.allList?listSection(S.allList,null):LISTS.map(l=>listSection(l.k,null)).join(""))}
@@ -1218,8 +1237,13 @@ function viewToday(){
   const html=LISTS.map(l=>listSection(l.k,set)).join("");
   const c=statusCounts().all;
   const top="";
-  if(!html)return top+`<div class="empty"><strong>All caught up</strong>Nothing is overdue, due soon, or waiting for a first log.</div>`;
-  return top+html;
+  return top+(html||`<div class="empty"><strong>All caught up</strong>Nothing is overdue, due soon, or waiting for a first log.</div>`)+downtimeCard(!html);
+}
+function downtimeCard(free){
+  const ts=sorted().filter(t=>t.list==="downtime"&&!t.off).sort(byDowntime);
+  const go=`<button type="button" class="btn dtgo" data-godown>${ic("downtime")}${ts.length?"See all "+ts.length+" downtime chores":"Set up downtime chores"}</button>`;
+  if(!free)return ts.length?`<div class="dtcard slim"><span class="lic">${ic("downtime")}</span><span class="dtt">Slow moment? Pick something from Downtime.</span>${go}</div>`:"";
+  return `<div class="section dtcard"><div class="dthead"><span class="lic">${ic("downtime")}</span><div><h2>Nothing due? Try a downtime chore</h2><p class="note">${ts.length?"These have gone the longest without being done.":"Downtime is a list of deep-clean and catch-up chores with no due date, for slow days and closures."}</p></div></div>${ts.length?`<div class="list">${ts.slice(0,3).map(rowHTML).join("")}</div>`:""}<div class="toolbar">${go}</div></div>`;
 }
 function viewHistory(){
   const q=S.hist.trim().toLowerCase();
@@ -1320,6 +1344,7 @@ const IC={today:'<path d="M6 9a6 6 0 0 1 12 0c0 6.5 2.5 8.5 2.5 8.5h-17S6 15.5 6
   weekly:'<rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M7 14.5h10"/>',
   monthly:'<rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M7.5 13.5h.01M12 13.5h.01M16.5 13.5h.01M7.5 17h.01M12 17h.01"/>',
   quarterly:'<circle cx="12" cy="12" r="9"/><path d="M12 3v9h9"/>',
+  downtime:'<path d="M4 9h12v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16"/><path d="M8 3.5c0 1.2 1 1.3 1 2.5M12 3.5c0 1.2 1 1.3 1 2.5"/>',
   yearly:'<path d="M12 3.2l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.6l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"/>',
   history:'<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.4"/><path d="M3.5 3.5v4.9h4.9"/><path d="M12 7.5V12l3 2"/>',
   setup:'<path d="M4 6.5h9M17 6.5h3M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/>',
@@ -1339,7 +1364,7 @@ const needN=x=>x?x.over+x.soon+x.new:0;
 function pageHead(C){const h=$("#pageHead");if(!h)return;document.body.dataset.view=S.tab;
   const all=S.loaded.t,L=S.tab==="all"&&S.allList?LISTS.find(l=>l.k===S.allList):null;
   const lt=k=>S.tasks.filter(t=>t.list===k&&!t.off&&t.freq!=="Optional").length,s=n=>`${n} task${n===1?"":"s"}`;
-  const SUB={daily:"Due each clinic day it's scheduled. Log each one when it's done, or log the whole list at once.",weekly:"Due once a week, or on the day of the week set in Setup.",monthly:"Shows up on the 1st and is due by the end of the month.",quarterly:"Shows up on the first day of each quarter it runs in and is due by the end of that quarter.",yearly:"Due once a year, or by its due-by date."};
+  const SUB={daily:"Due each clinic day it's scheduled. Log each one when it's done, or log the whole list at once.",weekly:"Due once a week, or on the day of the week set in Setup.",monthly:"Shows up on the 1st and is due by the end of the month.",quarterly:"Shows up on the first day of each quarter it runs in and is due by the end of that quarter.",yearly:"Due once a year, or by its due-by date.",downtime:"Deep chores with no due date, for slow days and closures. Never-done and longest-ago chores are at the top."};
   const P=S.tab==="today"?["Today",all?`${needN(C.all)} need attention · ${s(S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length)}`:"","Everything that needs attention today, from every list: overdue, due soon or not started yet. Tick a task's box to log it, or tap ⋯ to add a note or another date."]
     :STATUS_PAGES.includes(S.tab)?[{over:"Overdue",soon:"Due soon",new:"Not started",ok:"Completed"}[S.tab],all?s(C.all[S.tab]):"",{over:"Past due. Log these first.",soon:"Coming due soon: inside each frequency's due soon window (Setup › Schedule rules).",new:"Not logged yet, or not done since a reset. Monthly and quarterly tasks also wait here from the 1st until they're due soon.",ok:"Done for now: logged and not due again yet."}[S.tab]]
     :S.tab==="all"&&S.editTasks?["Edit tasks",all?(()=>{const ts=S.tasks.filter(t=>L?t.list===L.k:LISTS.some(l=>l.k===t.list)),on=ts.filter(t=>!t.off&&t.freq!=="Optional").length,off=ts.length-on;return (L?L.title+" · ":"")+`${on} on`+(off?` · ${off} off`:"")})():"","Rename tasks, change how often they're due, turn them on or off, drag ⠿ to reorder, set days, quarters, due-by dates or subtasks, and add new ones. Changes save as you go."]
@@ -1404,6 +1429,7 @@ document.addEventListener("click",async ev=>{
   if("clear" in b.dataset){S.filter=null;render();return}
   if(b.dataset.jump){const el=document.getElementById(b.dataset.jump);if(el)el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});return}
   if(b.dataset.edittasks!==undefined){S.editTasks=!S.editTasks;S.confirm=null;saveHash();render();return}
+  if("godown" in b.dataset){const none=!S.tasks.some(t=>t.list==="downtime"&&!t.off);S.tab="all";S.allList="downtime";S.editTasks=none&&S.canWrite;S.open=null;S.confirm=null;saveHash();render();scrollTo(0,0);return}
   if(b.dataset.goedit!==undefined){S.tab="all";S.editTasks=true;S.open=null;S.confirm=null;saveHash();render();scrollTo(0,0);return}
   if(b.dataset.collapse){colToggle(b.dataset.collapse);render();return}
   if(b.dataset.quick){const id=b.dataset.quick;if(!getMe()){toast("Pick your initials at the top first.");return}
