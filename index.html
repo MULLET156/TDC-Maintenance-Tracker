@@ -648,6 +648,15 @@ body.editing .ibub[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 
   .hbar .logo{justify-self:start}
   .hbar .logo img{max-width:240px!important}
   .hbar .title-row{justify-self:start!important}}
+
+/* ===== shared page frame (TDC-Office-Plan/DESIGN.md): one 4px line under the header in the current page's colour, plain warm page, grey search boxes ===== */
+header.top{box-shadow:0 0 0 100vmax var(--surface)!important;clip-path:inset(0 -100vmax -4px)!important;margin-bottom:4px!important}
+header.top>.tdc-line{position:absolute;left:-100vmax;right:-100vmax;bottom:-4px;height:4px;background:var(--pg);pointer-events:none}
+@media (max-width:640px){header.top>.tdc-line{display:none}}
+:root[data-theme="arcade"] header.top>.tdc-line,:root[data-theme="quest"] header.top>.tdc-line{display:none}
+body[data-view]{background-color:var(--bg)!important}
+@media (max-width:640px){header.top{box-shadow:none!important;clip-path:none!important;margin-bottom:0!important;border-bottom:4px solid var(--pg)!important}}
+:root[data-theme="arcade"] header.top,:root[data-theme="quest"] header.top{box-shadow:none!important;clip-path:none!important}
 </style>
 
 </head>
@@ -657,7 +666,7 @@ body.editing .ibub[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 
   <p id="signinMsg" role="alert"></p><p class="sg-note">This device stays signed in for 90 days. Sign out under Setup.</p></div></div>
 
 <div class="wrap">
-  <header class="top">
+  <header class="top"><span class="tdc-line" aria-hidden="true"></span>
    <div class="hbar">
     <div class="brand">
       <div class="logo"><img class="logo-l" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCAyNDAgNjQiPjxyZWN0IHg9IjEuNSIgeT0iMS41IiB3aWR0aD0iMjM3IiBoZWlnaHQ9IjYxIiByeD0iMTAiIGZpbGw9IiNGM0Y3RjciIHN0cm9rZT0iI0E5QkFCRCIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtZGFzaGFycmF5PSI3IDUiLz48ZyBmaWxsPSJub25lIiBzdHJva2U9IiM1RjczNzgiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjIwIiB5PSIxOCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjI4IiByeD0iNCIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMjciIHI9IjMuNCIvPjxwYXRoIGQ9Ik0yMSA0M2wxMC0xMCA3IDcgNS01IDEwIDkiLz48L2c+PHRleHQgeD0iNjgiIHk9IjQwIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTkiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiM1RjczNzgiPllvdXIgbG9nbyBoZXJlPC90ZXh0Pjwvc3ZnPg=="><img class="logo-d" alt="Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNDAiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCAyNDAgNjQiPjxyZWN0IHg9IjEuNSIgeT0iMS41IiB3aWR0aD0iMjM3IiBoZWlnaHQ9IjYxIiByeD0iMTAiIGZpbGw9IiMxNTI2MjkiIHN0cm9rZT0iIzRBNjI2NiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtZGFzaGFycmF5PSI3IDUiLz48ZyBmaWxsPSJub25lIiBzdHJva2U9IiNBN0JCQkYiIHN0cm9rZS13aWR0aD0iMi40IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjIwIiB5PSIxOCIgd2lkdGg9IjM0IiBoZWlnaHQ9IjI4IiByeD0iNCIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMjciIHI9IjMuNCIvPjxwYXRoIGQ9Ik0yMSA0M2wxMC0xMCA3IDcgNS01IDEwIDkiLz48L2c+PHRleHQgeD0iNjgiIHk9IjQwIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLEFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTkiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiNBN0JCQkYiPllvdXIgbG9nbyBoZXJlPC90ZXh0Pjwvc3ZnPg=="></div>
