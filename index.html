@@ -32,23 +32,23 @@
 <style>
 /* Layout: one working column; status band on top, tabbed checklists below, each task an indicator-strip row */
 :root{
-  --bg:#F3F7F7; --surface:#FFFFFF; --sunk:#E8EFEF; --line:#D3DEDE;
-  --ink:#122A2E; --muted:#55686C; --accent:#0E6B73; --accent-ink:#FFFFFF; --accent-soft:#DCEFEF;
-  --over:#B3302A; --over-soft:#FBE6E4; --soon:#946000; --soon-soft:#FBF0D9;
-  --ok:#27704A; --ok-soft:#E1F2E7; --new:#56696E; --new-soft:#E9EEEF;
+  /* shared base (TDC-Office-Plan/DESIGN.md) */ --bg:#F4F4EF; --surface:#FFFFFF; --sunk:#EBECE4; --line:#D7D9CD;
+  --ink:#1F2D33; --muted:#5C6459; --accent:#0E6B73; --accent-ink:#FFFFFF; --accent-soft:#DCEFEF;
+  --over:#B3261E; --over-soft:#F9DEDB; --soon:#8A4B00; --soon-soft:#FBEAD2;
+  --ok:#2D7A3A; --ok-soft:#DCEFDF; --new:#56696E; --new-soft:#E9EEEF;
   --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
   --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
   --r:10px;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="arcade"]):not([data-theme="quest"]){
-  --bg:#0D1A1C; --surface:#152629; --sunk:#1B3034; --line:#2A4246;
-  --ink:#E4EFEF; --muted:#93AAAE; --accent:#4FB7BF; --accent-ink:#06191B; --accent-soft:#173B3F;
+  --bg:#11191C; --surface:#18242A; --sunk:#1F2E34; --line:#2D3E45;
+  --ink:#E5EBE7; --muted:#9AA69F; --accent:#4FB7BF; --accent-ink:#06191B; --accent-soft:#173B3F;
   --over:#F07D74; --over-soft:#3A1D1B; --soon:#E8B04F; --soon-soft:#352A14;
   --ok:#6BC891; --ok-soft:#16301F; --new:#90A3A7; --new-soft:#1E2E31; --scrim:rgba(0,0,0,.65); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0D1A1C; --surface:#152629; --sunk:#1B3034; --line:#2A4246;
-  --ink:#E4EFEF; --muted:#93AAAE; --accent:#4FB7BF; --accent-ink:#06191B; --accent-soft:#173B3F;
+  --bg:#11191C; --surface:#18242A; --sunk:#1F2E34; --line:#2D3E45;
+  --ink:#E5EBE7; --muted:#9AA69F; --accent:#4FB7BF; --accent-ink:#06191B; --accent-soft:#173B3F;
   --over:#F07D74; --over-soft:#3A1D1B; --soon:#E8B04F; --soon-soft:#352A14;
   --ok:#6BC891; --ok-soft:#16301F; --new:#90A3A7; --new-soft:#1E2E31; --scrim:rgba(0,0,0,.65); color-scheme:dark}
 *{box-sizing:border-box}
@@ -214,7 +214,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-
 .themeseg button{border:0;background:transparent;color:var(--ink);font:inherit;font-weight:600;font-size:14px;padding:8px 14px;border-radius:999px;min-height:38px;cursor:pointer}
 .themeseg button[aria-checked="true"]{background:var(--accent);color:var(--accent-ink)}
 .logoprev{display:flex;align-items:center;min-height:76px;padding:10px 14px;border:1px dashed var(--line);border-radius:8px;max-width:420px}
-.logoprev.lt{background:#F3F7F7}.logoprev.dk{background:#0D1A1C}
+.logoprev.lt{background:#F4F4EF}.logoprev.dk{background:#11191C}
 .logoprev img{display:block;height:56px;width:auto;max-width:100%;object-fit:contain}
 .daychip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-weight:600;cursor:pointer;background:var(--surface)}
 .daychip:has(input:checked){background:var(--accent-soft);border-color:var(--accent)}
