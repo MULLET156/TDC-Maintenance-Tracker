@@ -4,13 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0E6B73">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Maintenance">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>TDC Maintenance Tracker</title>
 <meta name="description" content="Toledo Dental Care maintenance checklists and completion log.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230E6B73%27/%3E%3Cpath d=%27M9 16.5l4.5 4.5L23 11%27 fill=%27none%27 stroke=%27white%27 stroke-width=%273.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <style>
 /* Layout: one working column; status band on top, tabbed checklists below, each task an indicator-strip row */
 :root{
@@ -20,7 +26,7 @@
   --ok:#27704A; --ok-soft:#E1F2E7; --new:#56696E; --new-soft:#E9EEEF;
   --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
   --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
   --r:10px;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="arcade"]):not([data-theme="quest"]){
@@ -173,6 +179,12 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-
 .dlg h3{margin:0;font-family:var(--f-display);font-stretch:85%;font-weight:800;font-size:21px}
 .dlg p{margin:0;font-size:14px;color:var(--muted)}
 .dlg-actions{justify-content:flex-end;margin-top:6px}
+.modal.sheet{place-items:end center;padding:0}
+.modal.sheet .dlg{width:100%;max-width:480px;border-radius:16px 16px 0 0;border-top:4px solid var(--accent)!important;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+.sheethead{display:flex;align-items:center;justify-content:space-between}
+.mgo{display:flex;align-items:center;gap:10px;min-height:48px;font-size:16px;justify-content:flex-start}
+.mgo .ic{width:20px;height:20px}
+.halfrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .btn.danger.solid{background:var(--over);border-color:var(--over);color:var(--surface)}
 .btn.danger.solid:disabled{opacity:.6}
 .io{display:flex;flex-direction:column;gap:6px;padding:12px;border-top:1px solid var(--line)}
@@ -213,7 +225,29 @@ body.is-dragging,body.is-dragging *{cursor:grabbing!important;user-select:none;-
 .subchk:has(input:checked){background:var(--ok-soft);border-color:var(--ok)}
 .subchk input{accent-color:var(--ok);margin:0;width:14px;height:14px}
 .subchk small{font-family:var(--f-mono);font-size:11px;color:var(--muted);font-weight:500}
-.subprog{font-size:12.5px;color:var(--muted)}
+.subprog{font-size:12.5px;color:var(--muted);display:inline-flex;align-items:center;gap:7px;font-family:var(--f-mono)}
+.sbar{position:relative;display:inline-block;width:72px;height:5px;border-radius:3px;background:var(--sunk);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+.sbar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--c,var(--accent))}
+.sbar.full i{background:var(--ok)}
+/* search, frequency filter and group by (shared look with Lab Tracker and Supply Room) */
+.findbar{display:flex;gap:8px;margin-top:2px}
+.findbar input{flex:1;min-width:0;height:40px;box-sizing:border-box;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);font:inherit;font-size:15px}
+.findbar select{height:40px;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;background:var(--sunk);color:var(--ink);padding:0 10px;font:inherit;font-size:14px;max-width:44%}
+.findbar input:focus,.findbar select:focus{outline:2px solid var(--accent);outline-offset:1px}
+body[data-view="history"] #findBar,body[data-view="setup"] #findBar,body.editing #findBar{display:none}
+.listbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+.seg{display:inline-flex;background:var(--sunk);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:7px;padding:7px 12px;font:inherit;font-weight:700;font-size:13.5px;color:var(--muted);cursor:pointer;min-height:34px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seglbl{font-size:12.5px;color:var(--muted);font-weight:600;margin-right:6px}
+.findnote{font-size:13px;color:var(--muted)}
+.findnote button{font:inherit;font-weight:700;color:var(--accent);background:none;border:0;padding:0 0 0 6px;cursor:pointer;text-decoration:underline}
+.ptab.pmore{display:none}
+.wlbl{font-size:12px;white-space:nowrap}
+.hbar .newbtn{border-color:var(--accent);color:var(--accent)}
+.whoami label:has(.wlbl) .hic{display:none}
+.hbar #syncTxt{display:none}
+.hbar .hdr-row{gap:6px}
 @media (max-width:620px){.tdays{padding-left:0}}
 .house summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)}
 .rule-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 14px;align-items:end;padding:10px 12px;border-top:1px solid var(--line)}
@@ -347,7 +381,7 @@ html{overflow-x:clip}
 body[data-view]{background-color:color-mix(in srgb,var(--pg-soft) 45%,var(--bg))}
 .wrap{padding-block:0 64px;gap:16px}
 header.top{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;flex-wrap:nowrap;gap:10px;position:relative;background:var(--surface);box-shadow:0 0 0 100vmax var(--surface),0 3px 0 100vmax var(--pg);clip-path:inset(0 -100vmax -3px);padding:10px 0 12px;margin-bottom:3px}
-.hbar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px}
+.hbar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(max-content,1fr);align-items:center;gap:12px}
 .hbar .brand{justify-self:start;min-width:0}
 .hbar .logo{margin:0}
 .hbar .logo img{height:44px}
@@ -372,6 +406,12 @@ header.top{display:flex;flex-direction:column;align-items:stretch;justify-conten
 .ptab .n{font-family:var(--f-body);font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
 .ptab .n.zero{opacity:.55}
 .ptab .pl{white-space:nowrap}
+/* tile style B (shared with Lab Tracker and Supply Room): count, icon and label on one line */
+.ptab{flex-direction:row;gap:7px;min-height:48px;font-size:15px}
+.ptab .pt1{display:contents}
+.ptab .n{order:-1;font-size:19px}
+.ptab .pt1 .ic{order:0}
+.ptab .pl{order:1}
 .ptab[data-tab="today"]{--tc:var(--c-today);--tc-soft:var(--c-today-soft);--tc-fg:var(--c-today-fg)}
 .ptab[data-tab="over"]{--tc:var(--over);--tc-soft:var(--over-soft);--tc-fg:var(--surface)}
 .ptab[data-tab="soon"]{--tc:var(--soon);--tc-soft:var(--soon-soft);--tc-fg:var(--surface)}
@@ -452,7 +492,9 @@ body.editing .ibub[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 
   .soundbtn.setupbtn{width:40px;height:40px;padding:0;justify-content:center}
   .ptabs{position:fixed;left:0;right:0;bottom:0;z-index:15;gap:0;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--surface);border-top:1px solid var(--line);padding:5px max(4px,env(safe-area-inset-left,0px)) calc(5px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-right,0px));box-shadow:0 -4px 14px rgba(0,0,0,.08)}
   .ptab{border:0;background:transparent;min-height:50px;border-radius:10px;font-size:11px;font-weight:700;color:var(--muted);opacity:1!important;padding:4px 1px}
-  .ptab .pt1{flex-direction:column;gap:1px;position:relative}
+  .ptab{flex-direction:column;gap:1px;font-size:11px}
+  .ptab .pt1{display:flex;flex-direction:column;gap:1px;position:relative}
+  .ptab .n{order:0;font-size:10.5px}
   .ptab .ic{width:22px;height:22px;color:var(--tc)}
   .ptab .n{position:absolute;top:-4px;left:calc(50% + 6px);font-size:10.5px;min-width:17px;height:17px;line-height:17px;padding:0 4px;border-radius:99px;background:var(--tc);color:var(--tc-fg);text-align:center}
   .ptab .n.zero{display:none}
@@ -460,6 +502,19 @@ body.editing .ibub[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 
   .ptab[aria-selected="true"]::after{display:none}
   body{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
   #toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+  /* same phone header as Lab Tracker and Supply Room: logo, app name, initials; the rest lives under More */
+  .hbar{grid-template-columns:auto minmax(0,1fr) auto!important}
+  .hbar .title-row{display:flex!important;justify-self:start;align-items:flex-start;text-align:left;min-width:0;overflow:hidden;max-width:100%;justify-self:stretch}
+  .hbar .logo img{max-width:min(92px,100%)!important}
+  .hbar .title-row h1{font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .hbar .hdr-row2,.hbar #snd,.hbar .sync,.hbar .wlbl{display:none!important}
+  .hbar .hdr-tools{justify-self:end}
+  .ptabs{grid-template-columns:repeat(6,minmax(0,1fr))!important}
+  .ptab.pmore{display:flex;--tc:var(--ink);--tc-soft:var(--sunk)}
+  .findbar{margin-top:8px}
+  .findbar select{max-width:40%;font-size:13px;padding:0 6px}
+  .seglbl{display:none}
+  .seg button{padding:7px 10px}
   .pagehead{padding:5px 10px;border-left-width:5px;border-radius:9px;column-gap:8px;grid-template-columns:auto minmax(0,1fr) auto}
   .pagehead p,.pagehead .phx{display:none}
   .pagehead h2{font-size:17px}
@@ -586,12 +641,13 @@ body.editing .ibub[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 
         <button class="soundbtn iconbtn" id="snd" type="button"></button>
         <div class="sync" role="status"><span class="dot busy" id="dot"></span><span id="syncTxt">Connecting…</span></div>
         <div class="whoami">
-          <label for="who" title="Logging as"><span class="hic" data-ic="user"></span><span class="vh2">Logging as</span></label>
+          <label for="who" title="Logging as"><span class="hic" data-ic="user"></span><span class="wlbl">Logging as</span></label>
           <select id="who"></select>
         </div>
       </div>
       <div class="hdr-row2">
         <button class="soundbtn setupbtn" id="allbtn" type="button" data-tab="all" aria-pressed="false" aria-label="All tasks"><span class="hic" data-ic="all"></span><span class="lbl">All tasks</span></button>
+        <button class="soundbtn setupbtn newbtn" id="newbtn" type="button" data-newtask aria-label="New task"><span class="hic" data-ic="plus"></span><span class="lbl">New task</span></button>
         <button class="soundbtn setupbtn" id="logbtn" type="button" data-tab="history" aria-pressed="false" aria-label="Log"><span class="hic" data-ic="history"></span><span class="lbl">Log</span></button>
         <button class="soundbtn setupbtn" id="setupbtn" type="button" data-tab="setup" aria-pressed="false" aria-label="Setup"><span class="hic" data-ic="setup"></span><span class="lbl">Setup</span></button>
       </div>
@@ -599,6 +655,7 @@ body.editing .ibub[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 
    </div>
    <nav class="ptabs" role="tablist" id="tabs" aria-label="Pages"></nav>
    <div class="pagehead" id="pageHead"><span class="phi" id="phIcon" aria-hidden="true"></span><h2 id="phTitle"></h2><span class="phn" id="phN"></span><p id="phSub"></p></div>
+   <div class="findbar" id="findBar"><input id="tq" type="search" placeholder="Search tasks and subtasks…" aria-label="Search tasks" autocomplete="off" enterkeyhint="search"><select id="tfreq" aria-label="Show frequency"><option value="">All frequencies</option></select></div>
   </header>
 
 
@@ -737,7 +794,7 @@ const DEF_RULE={Daily:{d:1,soon:0},Weekly:{d:7,soon:2},Monthly:{m:1,soon:7},Quar
 let RULE={...DEF_RULE};
 const TABS=[["daily","Daily"],["weekly","Weekly"],["monthly","Monthly"],["quarterly","Quarterly"],["yearly","Yearly"]];
 const VIEWS=[...TABS.map(t=>t[0]),"history","setup"];
-const S={logo:{l:null,d:null},logoBusy:null,tasks:[],log:[],team:[],loaded:{t:false,l:false,s:false},canWrite:true,uid:null,open:null,confirm:null,filter:null,tab:"today",hist:"",db:null,resets:{},rulesRaw:{},clinic:null,clearing:false,canKnown:false,older:[],olderDone:false,dl:null,imp:null,impRemove:false,impBusy:false};
+const S={logo:{l:null,d:null},logoBusy:null,tasks:[],log:[],team:[],loaded:{t:false,l:false,s:false},canWrite:true,uid:null,open:null,confirm:null,filter:null,tab:"today",hist:"",q:"",ff:"",grp:(()=>{try{return localStorage.getItem("tdc-grp")==="status"?"status":"freq"}catch(e){return "freq"}})(),db:null,resets:{},rulesRaw:{},clinic:null,clearing:false,canKnown:false,older:[],olderDone:false,dl:null,imp:null,impRemove:false,impBusy:false};
 
 /* ---------- dates ---------- */
 const pad=n=>String(n).padStart(2,"0");
@@ -1205,10 +1262,26 @@ function panelHTML(taskId,scope){
 }
 function colGet(k){try{return (JSON.parse(localStorage.getItem("tdc-col")||"[]")).includes(k)}catch(e){return false}}
 function colToggle(k){try{let a=JSON.parse(localStorage.getItem("tdc-col")||"[]");a=a.includes(k)?a.filter(x=>x!==k):[...a,k];localStorage.setItem("tdc-col",JSON.stringify(a))}catch(e){}}
+/* ---------- search, frequency filter, group by ---------- */
+const finding=()=>!!(S.q.trim()||S.ff);
+function passFind(t){if(S.ff&&t.list!==S.ff)return false;const q=S.q.trim().toLowerCase();if(!q)return true;
+  return (t.name+" "+subsOf(t).map(x=>x.name).join(" ")+" "+(t.freq||"")).toLowerCase().includes(q)}
+function noMatchHTML(){return `<div class="empty"><strong>No tasks match</strong>Nothing here matches${S.q.trim()?` “${esc(S.q.trim())}”`:""}${S.ff?` in ${esc((LISTS.find(l=>l.k===S.ff)||{}).title||S.ff)}`:""}. <button type="button" class="btn ghost" data-clearfind style="margin-top:8px">Clear search</button></div>`}
+const ST_LBL={over:"Overdue",soon:"Due soon",new:"Not started",ok:"Completed"};
+function grpBarHTML(){return `<div class="listbar"><span><span class="seglbl">Group by</span><span class="seg" role="group" aria-label="Group tasks by">${[["freq","Frequency"],["status","Due status"]].map(([k,l])=>`<button type="button" data-grp="${k}" aria-pressed="${S.grp===k}">${l}</button>`).join("")}</span></span>${finding()?`<span class="findnote">Filtered<button type="button" data-clearfind>Clear</button></span>`:""}</div>`}
+function statusSections(set){
+  return set.map(st=>{
+    const tasks=sorted().filter(t=>!t.off&&t.freq!=="Optional"&&t.list!=="downtime"&&LISTS.some(l=>l.k===t.list)&&statusOf(t).s===st&&passFind(t));
+    if(!tasks.length)return "";
+    const ck=S.tab+":st-"+st,col=colGet(ck);
+    const head=`<div class="sec-head"><h2 style="--tc:var(--${st});--tc-soft:var(--${st}-soft)"><button type="button" class="secbtn" id="sec-${S.tab}-st-${st}" data-collapse="${ck}" aria-expanded="${!col}"><span class="lic">${ic(st)}</span>${ST_LBL[st]}<span class="seccount">${tasks.length}</span><span class="chev">${ic("chev")}</span></button></h2></div>`;
+    if(col)return `<div class="section collapsed">${head}</div>`;
+    return `<div class="section">${head}<div class="list">${tasks.map(rowHTML).join("")}</div></div>`}).join("")}
 function listSection(k,filterSet){
   const meta=LISTS.find(l=>l.k===k);
   let tasks=sorted().filter(t=>t.list===k&&!t.off);
   if(filterSet)tasks=tasks.filter(t=>filterSet.includes(statusOf(t).s));
+  if(finding()&&!(S.tab==="all"&&S.editTasks))tasks=tasks.filter(passFind);
   if(k==="optional")tasks.sort(byFreq);
   if(k==="downtime")tasks.sort(byDowntime);
   const groupOpen=S.open==="all-"+k;
@@ -1219,12 +1292,13 @@ function listSection(k,filterSet){
   const head=own?`<div class="sec-head"><h2 style="--tc:var(--c-${k});--tc-soft:var(--c-${k}-soft)"><span class="secbtn" style="cursor:default"><span class="lic">${ic(k)}</span>${esc(meta.title)}<span class="seccount">${tasks.length}</span></span></h2>${tools}</div>`:`<div class="sec-head"><h2 style="--tc:var(--c-${k});--tc-soft:var(--c-${k}-soft)"><button type="button" class="secbtn" id="sec-${ck.replace(":","-")}" data-collapse="${ck}" aria-expanded="${!col}"><span class="lic">${ic(k)}</span>${esc(meta.title)}<span class="seccount">${tasks.length}</span><span class="chev">${ic("chev")}</span></button></h2>${col?"":tools}</div>`;
   if(!own&&col&&tasks.length)return `<div class="section collapsed">${head}</div>`;
   const gp=groupOpen?`<div class="list" style="margin-bottom:2px">${panelHTML(null,k)}</div>`:"";
-  if(!tasks.length)return filterSet?"":`<div class="section">${head}<div class="empty">${k==="downtime"?"<strong>No downtime chores yet</strong>Add deep-clean and catch-up chores with Edit tasks: things to do on a slow day or during a closure. They have no due date; the ones done longest ago rise to the top.":`No ${k} tasks yet. Tap Edit tasks to add some.`}</div></div>`;
+  if(!tasks.length)return (filterSet||finding())?"":`<div class="section">${head}<div class="empty">${k==="downtime"?"<strong>No downtime chores yet</strong>Add deep-clean and catch-up chores with Edit tasks: things to do on a slow day or during a closure. They have no due date; the ones done longest ago rise to the top.":`No ${k} tasks yet. Tap Edit tasks to add some.`}</div></div>`;
   const hint=k==="optional"&&!filterSet&&S.canWrite?`<p class="note" style="margin:0">Turn tasks on or off on the Setup page. A task that's on moves into the section for its frequency and gets due dates; turning one off sends it back here.</p>`:"";
   return `<div class="section">${head}${hint}${gp}<div class="list">${tasks.map(rowHTML).join("")}</div></div>`;
 }
 function viewStatus(st){const html=LISTS.map(l=>listSection(l.k,[st])).join("");
   if(html)return html;
+  if(finding())return noMatchHTML();
   const E={over:["Nothing overdue","Every task is on schedule."],soon:["Nothing due soon","No task is inside its due soon window right now."],new:["Nothing waiting to start","Every task has been logged since it last came due."],ok:["Nothing completed yet","Tasks show here once they're logged and not due again yet."]}[st];
   return `<div class="empty"><strong>${E[0]}</strong>${E[1]}</div>`}
 function viewAll(){const n=k=>S.tasks.filter(t=>t.list===k&&!t.off&&t.freq!=="Optional").length;
@@ -1232,12 +1306,15 @@ function viewAll(){const n=k=>S.tasks.filter(t=>t.list===k&&!t.off&&t.freq!=="Op
   const ed=S.canWrite?`<button type="button" class="edtoggle${S.editTasks?" on":""}" data-edittasks aria-pressed="${!!S.editTasks}" aria-label="${S.editTasks?"Done editing tasks":"Edit tasks"}">${S.editTasks?ic("check")+"Done":ic("edit")+"Edit"}</button>`:"";
   const top=bubs.replace(/<\/div>$/,ed+"</div>");
   if(S.editTasks&&S.canWrite)return top+editListsHTML(S.allList);
-  return top+(S.allList?listSection(S.allList,null):LISTS.map(l=>listSection(l.k,null)).join(""))}
+  if(!S.allList&&S.grp==="status"){const h=statusSections(["over","soon","new","ok"]);return top+grpBarHTML()+(h||(finding()?noMatchHTML():""))}
+  const body=S.allList?listSection(S.allList,null):LISTS.map(l=>listSection(l.k,null)).join("");
+  return top+(S.allList?"":grpBarHTML())+(body||(finding()?noMatchHTML():""))}
 function viewToday(){
   const set=["over","soon","new"];
-  const html=LISTS.map(l=>listSection(l.k,set)).join("");
+  const html=S.grp==="status"?statusSections(set):LISTS.map(l=>listSection(l.k,set)).join("");
   const c=statusCounts().all;
-  const top="";
+  const top=grpBarHTML();
+  if(finding())return top+(html||noMatchHTML());
   return top+(html||`<div class="empty"><strong>All caught up</strong>Nothing is overdue, due soon, or waiting for a first log.</div>`)+downtimeCard(!html);
 }
 function downtimeCard(free){
@@ -1292,8 +1369,8 @@ function schedRowHTML(t){
   return row+(S.subEdit===t.id?subEditHTML(t):"")}
 function subsRowHTML(t,st){const subs=subsOf(t);if(!subs.length||st.s==="opt")return "";
   const ch=liveChecks(t),n=subs.filter(x=>ch[x.id]).length;
-  if(st.s==="ok"&&!n)return `<div class="subprog">${subs.length} subtask${subs.length===1?"":"s"}, all done</div>`;
-  return `<div class="subs" role="group" aria-label="Subtasks for ${esc(t.name)}">${subs.map(x=>`<label class="subchk"><input type="checkbox" id="sc-${esc(t.id)}-${esc(x.id)}" data-sub="${esc(t.id)}|${esc(x.id)}" ${ch[x.id]?"checked":""} ${S.canWrite?"":"disabled"}><span>${esc(x.name)}</span>${ch[x.id]?`<small>${esc(ch[x.id])}</small>`:""}</label>`).join("")}<span class="subprog">${n} of ${subs.length}</span></div>`}
+  if(st.s==="ok"&&!n)return `<div class="subprog"><span class="sbar full"><i style="width:100%"></i></span>${subs.length}/${subs.length} subtasks done</div>`;
+  return `<div class="subs" role="group" aria-label="Subtasks for ${esc(t.name)}">${subs.map(x=>`<label class="subchk"><input type="checkbox" id="sc-${esc(t.id)}-${esc(x.id)}" data-sub="${esc(t.id)}|${esc(x.id)}" ${ch[x.id]?"checked":""} ${S.canWrite?"":"disabled"}><span>${esc(x.name)}</span>${ch[x.id]?`<small>${esc(ch[x.id])}</small>`:""}</label>`).join("")}<span class="subprog"><span class="sbar"><i style="width:${Math.round(n/subs.length*100)}%"></i></span>${n}/${subs.length} done</span></div>`}
 function clinicHTML(){const od=openDays();
   return `<div class="section"><div class="sec-head"><h2>Clinic days</h2></div><p class="note" style="margin:0">Tasks only come due on days the clinic is open. A daily task done on your last open day of the week is next due on your first open day of the next week, and anything that would fall on a closed day moves to the next open one (a yearly due-by date moves back to the open day before it instead). Each daily task can also be limited to certain days, and each weekly task can be set to one day of the week, using the day boxes under it in the lists below. Quarterly tasks can be limited to certain quarters. Yearly tasks can have a due-by date.</p><div class="list"><div class="chips">${[1,2,3,4,5,6,0].map(d=>`<label class="daychip"><input type="checkbox" id="cd-${d}" data-day="${d}" ${od.includes(d)?"checked":""}><span>${DAYN[d]}</span></label>`).join("")}</div></div></div>`;
 }
@@ -1354,7 +1431,7 @@ const IC={today:'<path d="M6 9a6 6 0 0 1 12 0c0 6.5 2.5 8.5 2.5 8.5h-17S6 15.5 6
   new:'<circle cx="12" cy="12" r="8.5" stroke-dasharray="3.2 2.6"/>',
   ok:'<circle cx="12" cy="12" r="8.5"/><path d="M8 12.3l2.8 2.8L16.2 9.6"/>',
   all:'<path d="M9 6.5h11M9 12h11M9 17.5h11"/><path d="M4 6.5h.01M4 12h.01M4 17.5h.01"/>',
-  check:'<path d="M4.5 12.5l5 5L19.5 7"/>',chev:'<path d="M6 9l6 6 6-6"/>',edit:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>',reset:'<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.4"/><path d="M3.5 3.5v4.9h4.9"/>'};
+  check:'<path d="M4.5 12.5l5 5L19.5 7"/>',menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',plus:'<path d="M12 5v14M5 12h14"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',sound:'<path d="M11 5 6 9H3v6h3l5 4zM16 9a4 4 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/>',theme:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>',chev:'<path d="M6 9l6 6 6-6"/>',edit:'<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>',reset:'<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.4"/><path d="M3.5 3.5v4.9h4.9"/>'};
 const ic=n=>IC[n]?`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`:"";
 document.querySelectorAll("[data-ic]").forEach(e=>{e.innerHTML=ic(e.dataset.ic)});
 const PAGES=[["today","Today"],["over","Overdue"],["soon","Due soon"],["new","Not started"],["ok","Completed"]];
@@ -1378,7 +1455,8 @@ function pageHead(C){const h=$("#pageHead");if(!h)return;document.body.dataset.v
 function renderSetupBtn(){for(const [id,t] of [["setupbtn","setup"],["logbtn","history"],["allbtn","all"]]){const b=document.getElementById(id);if(b)b.setAttribute("aria-pressed",String(S.tab===t))}}
 function renderTabs(C){renderSetupBtn();C=C||statusCounts();const ready=S.loaded.t;
   $("#tabs").innerHTML=PAGES.map(([k,l])=>{const n=ready?(k==="today"?needN(C.all):C.all[k]):null;
-    return `<button class="ptab" id="pt-${k}" role="tab" data-tab="${k}" aria-selected="${S.tab===k}" aria-label="${l}${n!=null?`, ${n} task${n===1?"":"s"}`:""}"><span class="pt1">${ic(k)}<span class="n${n===0?" zero":""}">${n==null?"–":n}</span></span><span class="pl">${l}</span></button>`}).join("");
+    return `<button class="ptab" id="pt-${k}" role="tab" data-tab="${k}" aria-selected="${S.tab===k}" aria-label="${l}${n!=null?`, ${n} task${n===1?"":"s"}`:""}"><span class="pt1">${ic(k)}<span class="n${n===0?" zero":""}">${n==null?"–":n}</span></span><span class="pl">${l}</span></button>`}).join("")
+    +`<button class="ptab pmore" type="button" data-more aria-selected="${["all","history","setup"].includes(S.tab)}" aria-label="More: all tasks, log, setup, sound and theme"><span class="pt1">${ic("menu")}</span><span class="pl">More</span></button>`;
   pageHead(C);
 }
 function fitTa(t){t.style.height="auto";t.style.height=t.scrollHeight+"px"}
@@ -1401,7 +1479,7 @@ function render(){
   else if(S.tab==="history")h=viewHistory();
   else if(S.tab==="setup")h=viewSetup();
   else h=viewToday();
-  if(!getMe()&&S.canWrite&&S.tab!=="setup")h=`<div class="empty" style="text-align:left"><strong>Who's logging?</strong>Pick your initials in the top corner. This device remembers them.</div>`+h;
+  if(!getMe()&&S.canWrite&&S.tab!=="setup")h=`<div class="empty" style="text-align:left"><strong>Who's logging?</strong>Pick your initials next to "Logging as" at the top. This device remembers them, and every task you log is stamped with them.</div>`+h;
   $("#view").innerHTML=h;
   if(S.tab==="setup"&&S.canWrite){const secs=[...document.querySelectorAll("#view > .section")].filter(x=>x.querySelector(".sec-head h2"));const seen=new Set(),L=[];
     secs.forEach((x,i)=>{let t=x.querySelector(".sec-head h2").textContent.trim();if(LISTS.some(l=>l.title===t)||t==="Optional"){if(seen.has("Tasks"))return;t="Tasks"}if(seen.has(t))return;seen.add(t);x.id="sj-"+i;L.push([x.id,t])});
@@ -1416,6 +1494,11 @@ function render(){
 document.addEventListener("click",async ev=>{
   const b=ev.target.closest("button"); if(!b)return;
   if("signout" in b.dataset){TDC.logout();return}
+  if("more" in b.dataset){openMore();return}
+  if("newtask" in b.dataset){S.tab="all";S.editTasks=true;S.open=null;S.confirm=null;saveHash();render();const f=document.getElementById("new-"+(S.allList||"daily"));if(f){f.scrollIntoView({block:"center"});f.focus()}return}
+  if(b.dataset.moreGo){const k=b.dataset.moreGo;closeMore();({new:()=>$("#newbtn").click(),all:()=>$("#allbtn").click(),history:()=>$("#logbtn").click(),setup:()=>$("#setupbtn").click(),theme:()=>$("#themeBtn").click(),snd:()=>$("#snd").click()}[k]||(()=>{}))();return}
+  if(b.dataset.grp){S.grp=b.dataset.grp;try{localStorage.setItem("tdc-grp",S.grp)}catch(e){}render();return}
+  if("clearfind" in b.dataset){S.q="";S.ff="";$("#tq").value="";$("#tfreq").value="";render();return}
   if("expbackup" in b.dataset){exportBackup();return}
   if("exptasks" in b.dataset){exportTasks();return}
   if("impgo" in b.dataset){applyImport();return}
@@ -1552,7 +1635,15 @@ document.addEventListener("keydown",ev=>{if(ev.key!=="Tab")return;const d=docume
   const f=[...d.querySelectorAll("button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex='-1'])")];if(!f.length)return;
   const i=f.indexOf(document.activeElement);if(ev.shiftKey&&i<=0){ev.preventDefault();f[f.length-1].focus()}else if(!ev.shiftKey&&(i<0||i===f.length-1)){ev.preventDefault();f[0].focus()}});
 document.addEventListener("keydown",ev=>{if(ev.key==="Escape"&&(S.confirm==="clearall"||S.confirm==="resetall")&&!S.clearing){S.confirm=null;render()}});
-document.addEventListener("input",ev=>{if(ev.target.matches&&ev.target.matches("textarea.nm"))fitTa(ev.target);if(ev.target.id==="hq"){S.hist=ev.target.value;render()}});
+document.addEventListener("input",ev=>{if(ev.target.matches&&ev.target.matches("textarea.nm"))fitTa(ev.target);if(ev.target.id==="hq"){S.hist=ev.target.value;render()}if(ev.target.id==="tq"){S.q=ev.target.value;render()}});
+document.getElementById("tfreq").addEventListener("change",ev=>{S.ff=ev.target.value;render()});
+document.getElementById("tfreq").insertAdjacentHTML("beforeend",LISTS.filter(l=>l.k!=="downtime").map(l=>`<option value="${l.k}">${esc(l.title)}</option>`).join(""));
+/* phones: More sheet for what doesn't fit in the bottom tab bar (same as Lab Tracker) */
+function closeMore(){const m=document.getElementById("moreDlg");if(m)m.remove()}
+function openMore(){if(document.getElementById("moreDlg"))return;
+  document.body.insertAdjacentHTML("beforeend",`<div class="modal sheet" id="moreDlg"><div class="dlg" role="dialog" aria-modal="true" aria-label="More"><div class="sheethead"><h3>More</h3><button class="btn ghost" type="button" data-more-go="close">Close</button></div><button class="btn primary mgo" type="button" data-more-go="new">${ic("plus")}New task</button><button class="btn mgo" type="button" data-more-go="all">${ic("all")}All tasks</button><button class="btn mgo" type="button" data-more-go="history">${ic("history")}Log</button><button class="btn mgo" type="button" data-more-go="setup">${ic("setup")}Setup</button><div class="halfrow"><button class="btn mgo" type="button" data-more-go="snd">${ic("sound")}Sound</button><button class="btn mgo" type="button" data-more-go="theme">${ic("theme")}Theme</button></div></div></div>`);
+  const m=document.getElementById("moreDlg");m.addEventListener("click",e=>{if(e.target===m)closeMore()});const f=m.querySelector("[data-more-go]");if(f)f.focus()}
+document.addEventListener("keydown",ev=>{if(ev.key==="Escape")closeMore()});
 
 /* ---------- boot ---------- */
 S.tab="today";
