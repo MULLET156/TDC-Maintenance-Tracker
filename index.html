@@ -391,13 +391,13 @@ header.top{display:flex;flex-direction:column;align-items:stretch;justify-conten
 .pagehead p{grid-column:1/-1;margin:0;font-size:13px;color:var(--ink);opacity:.85}
 /* Today: status filter chips */
 .ibubs{display:flex;flex-wrap:wrap;gap:8px}
-.alltop{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
-.alltop .edtoggle{margin-left:auto}
-.edtoggle{display:inline-flex;align-items:center;white-space:nowrap;min-height:40px;border-width:2px;border-color:var(--pg);color:var(--pg);font-weight:800}
-.edtoggle.primary{background:var(--pg);border-color:var(--pg);color:var(--pg-fg)}
+.edtoggle{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:7px 12px 7px 10px;border:2px dashed var(--ink);border-radius:999px;background:var(--surface);color:var(--ink);font-weight:800;font-size:14px}
+.edtoggle .ic{width:16px;height:16px}
+.edtoggle:hover{border-style:solid}
+.edtoggle.on{background:var(--ink);border:2px solid var(--ink);color:var(--surface)}
 body.editing .ibub[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--pg)}
-@media (max-width:640px){.alltop .edtoggle{order:-1;width:100%;justify-content:center}}
-.ibub{display:inline-flex;align-items:center;gap:7px;padding:7px 14px 7px 10px;border:2px solid var(--tc,var(--line));border-radius:999px;background:var(--tc-soft,var(--surface));color:var(--tc,var(--ink));font-weight:700;font-size:14px}
+@media (max-width:640px){.edtoggle{padding:6px 11px 6px 9px;font-size:13px}}
+.ibub{display:inline-flex;align-items:center;gap:5px;padding:7px 12px 7px 9px;border:2px solid var(--tc,var(--line));border-radius:999px;background:var(--tc-soft,var(--surface));color:var(--tc,var(--ink));font-weight:700;font-size:14px}
 .ibub .ic{width:17px;height:17px}
 .ibub .bn{font-family:var(--f-mono);font-size:12.5px;font-weight:600;opacity:.8}
 .ibub[aria-pressed="true"]{background:var(--tc,var(--ink));color:var(--tc-fg,var(--surface));box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--ink)}
@@ -1209,8 +1209,8 @@ function viewStatus(st){const html=LISTS.map(l=>listSection(l.k,[st])).join("");
   return `<div class="empty"><strong>${E[0]}</strong>${E[1]}</div>`}
 function viewAll(){const n=k=>S.tasks.filter(t=>t.list===k&&!t.off&&t.freq!=="Optional").length;
   const bubs=`<div class="ibubs" role="group" aria-label="Interval"><button type="button" class="ibub b-all" id="ab-all" data-alllist="" aria-pressed="${!S.allList}">${ic("all")}All<span class="bn">${S.tasks.filter(t=>!t.off&&t.freq!=="Optional").length}</span></button>${LISTS.map(l=>`<button type="button" class="ibub" id="ab-${l.k}" data-alllist="${l.k}" aria-pressed="${S.allList===l.k}" style="--tc:var(--c-${l.k});--tc-soft:var(--c-${l.k}-soft);--tc-fg:var(--c-${l.k}-fg)">${ic(l.k)}${esc(l.label)}<span class="bn">${n(l.k)}</span></button>`).join("")}</div>`;
-  const ed=S.canWrite?`<button type="button" class="btn edtoggle${S.editTasks?" primary":""}" data-edittasks aria-pressed="${!!S.editTasks}">${S.editTasks?ic("check")+"Done editing":ic("edit")+"Edit tasks"}</button>`:"";
-  const top=`<div class="alltop">${bubs}${ed}</div>`;
+  const ed=S.canWrite?`<button type="button" class="edtoggle${S.editTasks?" on":""}" data-edittasks aria-pressed="${!!S.editTasks}">${S.editTasks?ic("check")+"Done editing":ic("edit")+"Edit tasks"}</button>`:"";
+  const top=bubs.replace(/<\/div>$/,ed+"</div>");
   if(S.editTasks&&S.canWrite)return top+editListsHTML(S.allList);
   return top+(S.allList?listSection(S.allList,null):LISTS.map(l=>listSection(l.k,null)).join(""))}
 function viewToday(){
