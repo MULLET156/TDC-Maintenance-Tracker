@@ -460,10 +460,11 @@ body.editing .ibub[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 
   .ptab[aria-selected="true"]::after{display:none}
   body{padding-bottom:calc(66px + env(safe-area-inset-bottom,0px))}
   #toast{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
-  .pagehead{padding:7px 12px;border-left-width:5px}
-  .pagehead p{display:none}
-  .pagehead{grid-template-columns:auto minmax(0,1fr)}
-  .pagehead .phn{grid-column:2;font-size:12px;white-space:normal}
+  .pagehead{padding:5px 10px;border-left-width:5px;border-radius:9px;column-gap:8px;grid-template-columns:auto minmax(0,1fr) auto}
+  .pagehead p,.pagehead .phx{display:none}
+  .pagehead h2{font-size:17px}
+  .pagehead .phi .ic{width:18px;height:18px}
+  .pagehead .phn{font-size:12px;white-space:nowrap;justify-self:end;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
   :root[data-theme="arcade"] .hbar .logo{padding:3px 6px;box-shadow:3px 3px 0 var(--line)}
   :root[data-theme="arcade"] .hbar .logo img{height:26px;max-width:96px}
   :root[data-theme="arcade"] .hbar .hdr-tools .soundbtn,:root[data-theme="arcade"] .hbar .whoami{box-shadow:2px 2px 0 var(--line)}
@@ -1373,7 +1374,7 @@ function pageHead(C){const h=$("#pageHead");if(!h)return;document.body.dataset.v
     :S.tab==="setup"?["Setup","","Team, clinic days, schedule rules, tasks, logo, appearance and backups."]
     :null;
   h.hidden=!P;if(!P)return;
-  $("#phIcon").innerHTML=ic(S.tab==="all"&&S.editTasks?"edit":L?L.k:S.tab);document.body.classList.toggle("editing",S.tab==="all"&&!!S.editTasks);$("#phTitle").textContent=P[0];$("#phN").textContent=P[1];$("#phSub").textContent=P[2]}
+  $("#phIcon").innerHTML=ic(S.tab==="all"&&S.editTasks?"edit":L?L.k:S.tab);document.body.classList.toggle("editing",S.tab==="all"&&!!S.editTasks);$("#phTitle").textContent=P[0];{const [h,...r]=String(P[1]||"").split(" · ");$("#phN").innerHTML=esc(h)+(r.length?`<span class="phx"> · ${esc(r.join(" · "))}</span>`:"")}$("#phSub").textContent=P[2]}
 function renderSetupBtn(){for(const [id,t] of [["setupbtn","setup"],["logbtn","history"],["allbtn","all"]]){const b=document.getElementById(id);if(b)b.setAttribute("aria-pressed",String(S.tab===t))}}
 function renderTabs(C){renderSetupBtn();C=C||statusCounts();const ready=S.loaded.t;
   $("#tabs").innerHTML=PAGES.map(([k,l])=>{const n=ready?(k==="today"?needN(C.all):C.all[k]):null;
