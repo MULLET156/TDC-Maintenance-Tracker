@@ -3,7 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}/* colour-coded header buttons, the same in all three apps: lists = navy, new = the app colour, log = olive, setup = grey */
+:root{--hb-nav:#1c3466;--hb-nav-soft:#dfe6f4;--hb-log:#4E5833;--hb-log-soft:#e5e9d8;--hb-set:#46575B;--hb-set-soft:#E4EAEA;--hb-fg:#ffffff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--hb-nav:#93b4ff;--hb-nav-soft:#1d2a44;--hb-log:#b5c48a;--hb-log-soft:#2a3322;--hb-set:#b7c4c6;--hb-set-soft:#26343a;--hb-fg:#111a1d}}
+:root[data-theme="dark"]{--hb-nav:#93b4ff;--hb-nav-soft:#1d2a44;--hb-log:#b5c48a;--hb-log-soft:#2a3322;--hb-set:#b7c4c6;--hb-set-soft:#26343a;--hb-fg:#111a1d}
+:root:not([data-theme="arcade"]):not([data-theme="quest"]) .hbar #allbtn{border:1.5px solid var(--hb-nav);background:var(--hb-nav-soft);color:var(--hb-nav)}
+:root:not([data-theme="arcade"]):not([data-theme="quest"]) .hbar #allbtn[aria-pressed="true"]{background:var(--hb-nav);border-color:var(--hb-nav);color:var(--hb-fg)}
+:root:not([data-theme="arcade"]):not([data-theme="quest"]) .hbar #newbtn{border:1.5px solid var(--accent);background:var(--accent-soft);color:var(--accent)}
+:root:not([data-theme="arcade"]):not([data-theme="quest"]) .hbar #newbtn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+:root:not([data-theme="arcade"]):not([data-theme="quest"]) .hbar #logbtn{border:1.5px solid var(--hb-log);background:var(--hb-log-soft);color:var(--hb-log)}
+:root:not([data-theme="arcade"]):not([data-theme="quest"]) .hbar #logbtn[aria-pressed="true"]{background:var(--hb-log);border-color:var(--hb-log);color:var(--hb-fg)}
+:root:not([data-theme="arcade"]):not([data-theme="quest"]) .hbar #setupbtn{border:1.5px solid var(--hb-set);background:var(--hb-set-soft);color:var(--hb-set)}
+:root:not([data-theme="arcade"]):not([data-theme="quest"]) .hbar #setupbtn[aria-pressed="true"]{background:var(--hb-set);border-color:var(--hb-set);color:var(--hb-fg)}
+</style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0E6B73">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
