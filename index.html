@@ -1505,7 +1505,33 @@ function renderTabs(C){renderSetupBtn();C=C||statusCounts();const ready=S.loaded
   pageHead(C);
 }
 function fitTa(t){t.style.height="auto";t.style.height=t.scrollHeight+"px"}
+/* ---------- Dashboard tiles: a small snapshot the server reads (tiles.php) ----------
+   For each active task: the day it turns overdue if nobody logs it, worked out here with the
+   same rules the page uses, so the server never has to copy the schedule logic. Dates are
+   absolute, so the snapshot only changes when tasks, the log or the settings change. */
+let tileT=null,tileSig="",tileDoc=null;
+function statusOn(t,day){const RD=Date,f=day.getTime();class FD extends RD{constructor(...a){if(a.length)super(...a);else super(f)}static now(){return f}}
+  window.Date=FD;try{return statusOf(t)}finally{window.Date=RD}}
+function tileSnapshot(){
+  const today=parse(todayISO()),tasks=[];
+  for(const t of sorted()){if(t.off||!RULE[t.freq])continue;
+    const st=statusOf(t);if(!["over","soon","ok","new"].includes(st.s))continue;
+    let over=null,due=null;
+    if(st.s==="over"){over=iso(today);due=st.next||iso(today)}
+    else for(let d=1;d<=62;d++){const day=new Date(today.getFullYear(),today.getMonth(),today.getDate()+d);
+      if(statusOn(t,day).s==="over"){over=iso(day);due=iso(new Date(day.getFullYear(),day.getMonth(),day.getDate()-1));break}}
+    if(over)tasks.push({n:String(t.name||"").slice(0,120),f:t.freq,over,due})}
+  return{v:1,made:todayISO(),tasks}}
+function queueTiles(){
+  if(!S.db||!S.canWrite||!S.loaded.t||!S.loaded.l||!S.loaded.s||tileDoc===undefined)return;
+  clearTimeout(tileT);tileT=setTimeout(async()=>{
+    let snap;try{snap=tileSnapshot()}catch(e){return}
+    const sig=JSON.stringify(snap.tasks);if(sig===tileSig)return;
+    if(tileDoc&&JSON.stringify(tileDoc.tasks||[])===sig){tileSig=sig;return}
+    try{await S.db.doc("settings/tiles").set(snap);tileSig=sig}catch(e){}
+  },2500)}
 function render(){
+  queueTiles();
   if(S.drag){S.dragPend=true;return}
   if(LISTS.some(l=>l.k===S.tab)){S.allList=S.tab;S.tab="all"}
   const act0=document.activeElement,tabFocus=act0&&act0.classList&&act0.classList.contains("ptab")?act0.id:null;
@@ -1704,6 +1730,7 @@ renderSnd();render();
   db.collection("tasks").onSnapshot(s=>{S.tasks=s.docs.map(d=>({id:d.id,...d.data()}));S.loaded.t=true;syncErr=false;idle();render()},()=>{S.loaded.t=true;syncErr=true;idle();render()});
   db.collection("log").orderBy("at","desc").limit(1000).onSnapshot(s=>{S.log=s.docs.map(d=>({id:d.id,...d.data()}));S.loaded.l=true;render()},()=>{S.loaded.l=true;render()});
   db.doc("settings/team").onSnapshot(s=>{S.team=(s.exists&&s.data().initials)||[];S.loaded.s=true;renderWho();render()},()=>{S.loaded.s=true;render()});
+  tileDoc=undefined;db.doc("settings/tiles").onSnapshot(s=>{tileDoc=(s.exists&&s.data())||null;queueTiles()},()=>{tileDoc=null});
   db.doc("settings/resets").onSnapshot(s=>{S.resets=(s.exists&&s.data())||{};render()},()=>{});
   db.doc("settings/clinic").onSnapshot(s=>{S.clinic=(s.exists&&s.data().days)||null;render()},()=>{});
   for(const [k,id] of [["l","logo-light"],["d","logo-dark"]])db.doc("settings/"+id).onSnapshot(s=>{const v=s.exists&&s.data()&&s.data().src;S.logo[k]=LOGO_OK(v)?v:null;applyLogo();if(S.tab==="setup")render()},()=>{});

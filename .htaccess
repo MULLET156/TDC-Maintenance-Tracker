@@ -6,6 +6,11 @@ RewriteCond %{HTTPS} !=on
 RewriteCond %{HTTP:X-Forwarded-Proto} !=https
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+# Dental Dashboard tiles: /tdc/tiles/<id> is answered by tiles.php.
+# Pass the Authorization header through (some servers drop it otherwise).
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteRule ^tdc/tiles/([a-z-]+)/?$ tiles.php?id=$1 [L,QSA]
+
 # Keep settings, the Git folder and project files private.
 RewriteRule (^|/)\.git(/|$) - [F,L]
 <FilesMatch "^(config\.php|config\.sample\.php|README\.md|\.gitignore|.*\.sql|.*\.sqlite)$">
