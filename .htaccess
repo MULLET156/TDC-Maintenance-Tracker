@@ -12,6 +12,9 @@ RewriteRule (^|/)\.git(/|$) - [F,L]
   Require all denied
 </FilesMatch>
 
+# Install as an app (home screen): serve the manifest with the right type.
+AddType application/manifest+json .webmanifest
+
 Options -Indexes
 DirectoryIndex index.html
 
