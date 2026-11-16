@@ -126,7 +126,7 @@ nav.tabs button[data-tab="today"][aria-selected=true]{background:var(--accent);c
 .row{display:grid;grid-template-columns:6px minmax(0,1fr) auto;border-top:1px solid var(--line)}
 .row:first-child{border-top:0}
 .strip{background:var(--c)}
-.strip.hatch{background:repeating-linear-gradient(135deg,var(--c) 0 3px,transparent 3px 7px)}
+.strip.hatch{background:var(--c)} /* solid stripe, same as Lab Tracker and Supply Room */
 .row[data-s=wait]{--c:var(--line)} .row[data-s=wait] .pill{--cs:var(--sunk);--c:var(--muted)}
 .row[data-s=over]{--c:var(--over)} .row[data-s=soon]{--c:var(--soon)} .row[data-s=ok]{--c:var(--ok)} .row[data-s=new]{--c:var(--new)} .row[data-s=opt]{--c:var(--line)}
 .main{padding:11px 12px 11px 14px;min-width:0;display:flex;flex-direction:column;gap:3px}
@@ -632,6 +632,22 @@ body.editing .ibub[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 
 #signinForm button{min-height:44px;font-size:15px}
 #signinMsg{min-height:1.2em;margin:0;color:var(--over);font-size:13.5px;font-weight:600}
 .sg-note{margin:0;font-size:12.5px;color:var(--muted)}
+
+/* desktop: same width and header layout as the Supply Room — logo | app name centred in the space left | buttons */
+@media (min-width:1100px){.wrap{max-width:1140px}}
+@media (min-width:1100px){
+  .hbar{grid-template-columns:max-content minmax(0,1fr) auto!important;column-gap:20px}
+  .hbar .logo img{width:auto!important}
+  .hbar .title-row{justify-self:center!important;align-items:flex-start!important;text-align:left!important}
+  .hbar .title-row h1{font-size:28px}
+}
+
+/* desktop: the app name sits in the same spot in all three apps (just right of the logo); the buttons get the rest of the row */
+@media (min-width:1100px){
+  .hbar{grid-template-columns:240px minmax(0,1fr) auto!important}
+  .hbar .logo{justify-self:start}
+  .hbar .logo img{max-width:240px!important}
+  .hbar .title-row{justify-self:start!important}}
 </style>
 
 </head>
