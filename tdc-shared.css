@@ -1,0 +1,92 @@
+/* TDC shared stylesheet — TDC-Office-Plan/brand/tdc-shared.css
+   ONE copy of this file lives in every TDC app (same name, next to index.html) and must match this file exactly.
+   Each app's design check fails when its copy differs. To change it: edit it here (Shared Design agent or Ryan),
+   then copy it into every app in the same evening. Rules: DESIGN.md §8–§10.
+   It uses each app's own colour variables (--surface, --line, --sunk, --muted, --accent, --pg, --ink or --fg, --bg),
+   so light and dark mode follow the app. */
+
+/* ---------- 1. Fonts, served by the app itself (fonts/ next to index.html). Never load fonts from another site. ---------- */
+@font-face{font-family:"Figtree";src:url(fonts/figtree.woff2) format("woff2");font-weight:300 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Archivo";src:url(fonts/archivo.woff2) format("woff2");font-weight:100 900;font-stretch:62% 125%;font-style:normal;font-display:swap}
+@font-face{font-family:"JetBrains Mono";src:url(fonts/jetbrains-mono.woff2) format("woff2");font-weight:100 800;font-style:normal;font-display:swap}
+
+/* ---------- 2. Group headings (DESIGN.md §8 "Group headings") ----------
+   One look in every app: the heading sits ABOVE its card on the page background:
+   colour dot · NAME (Archivo, uppercase) · count pill · fold arrow ……… tools/totals on the right.
+   Markup: put class "tdc-gh" on the heading element, as a direct child of the list card; the rows that follow it
+   (up to the next tdc-gh) become that group's card. Optional: "tdc-gcount" on the count, "tdc-gsub" on a
+   second-level heading inside the card. Colour: set --gc (and --gc-soft) on the heading; default = page colour.
+   tdc-shared.js adds the fold arrow and remembers folded groups on this device. */
+html :has(> .tdc-gh){background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;overflow:visible!important}
+html :has(> .tdc-gh) > :not(.tdc-gh){background-color:var(--surface)!important;border-left:1px solid var(--line)!important;border-right:1px solid var(--line)!important}
+html :has(> .tdc-gh) > :first-child:not(.tdc-gh),html .tdc-gh + :not(.tdc-gh){border-top:1px solid var(--line)!important;border-top-left-radius:10px!important;border-top-right-radius:10px!important}
+html :has(> .tdc-gh) > :not(.tdc-gh):has(+ .tdc-gh),html :has(> .tdc-gh) > :not(.tdc-gh):last-child{border-bottom:1px solid var(--line)!important;border-bottom-left-radius:10px!important;border-bottom-right-radius:10px!important}
+html .tdc-gh + :not(.tdc-gh):has(+ .tdc-gh){border-radius:10px!important}
+html .tdc-gh{--gc:var(--pg,var(--accent));display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-start!important;gap:6px 10px!important;margin:22px 0 10px!important;padding:0 2px!important;min-height:36px!important;background:transparent!important;border:0!important;box-shadow:none!important;color:var(--ink,var(--fg))!important;font-family:"Archivo",var(--f-display,system-ui),sans-serif!important;font-stretch:85%!important;font-weight:700!important;font-size:19px!important;line-height:1.2!important;letter-spacing:.04em!important;text-transform:uppercase!important;cursor:pointer!important;user-select:none!important;-webkit-user-select:none!important}
+html .tdc-gh:first-child{margin-top:4px!important}
+html .tdc-gh::before{content:""!important;flex:none!important;width:12px!important;height:12px!important;border-radius:50%!important;background:var(--gc)!important}
+html .tdc-gh:has(img,svg:not(.tdc-gchev svg),.tdc-gicon)::before{display:none!important}
+html .tdc-gh > *{font-family:inherit!important;font-stretch:inherit!important;font-size:inherit!important;font-weight:inherit!important;letter-spacing:inherit!important;text-transform:inherit!important;color:inherit!important}
+html .tdc-gh > :first-child{display:inline-flex!important;flex-wrap:wrap!important;align-items:center!important;gap:4px 8px!important;flex:0 1 auto!important;min-width:0!important;max-width:calc(100% - 96px)!important}
+html .tdc-gh::before,html .tdc-gh .tdc-gcount,html .tdc-gh .tdc-gchev{flex:none!important}
+html .tdc-gh:not(:has(.tdc-gcount)) > :first-child{max-width:calc(100% - 40px)!important}
+html .tdc-gh > :last-child:not(:first-child):not(.tdc-gcount):not(.tdc-gchev){margin-left:auto!important;font-family:"JetBrains Mono",ui-monospace,monospace!important;font-stretch:normal!important;font-size:13px!important;font-weight:600!important;letter-spacing:0!important;text-transform:none!important;color:var(--muted)!important}
+html .tdc-gh .tdc-gcount{font-family:"JetBrains Mono",ui-monospace,monospace!important;font-stretch:normal!important;font-size:13px!important;font-weight:600!important;letter-spacing:0!important;padding:1px 8px!important;border-radius:99px!important;background:var(--gc-soft,var(--sunk))!important;color:var(--ink,var(--fg))!important}
+html .tdc-gh .tdc-gchev{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:24px!important;height:24px!important;color:var(--muted)!important;transition:transform .15s!important;text-transform:none!important;letter-spacing:0!important}
+html .tdc-gh .tdc-gchev svg{width:18px!important;height:18px!important}
+html .tdc-gh[aria-expanded="false"] .tdc-gchev{transform:rotate(-90deg)!important}
+html .tdc-gh:focus-visible{outline:2px solid var(--accent)!important;outline-offset:3px!important;border-radius:6px!important}
+html .tdc-gh a,html .tdc-gh button,html .tdc-gh label,html .tdc-gh input{text-transform:none!important;letter-spacing:0!important;font-stretch:normal!important}
+html .tdc-gfold{display:none!important}
+html .tdc-gsub{background:var(--sunk)!important;color:var(--ink,var(--fg))!important;font-size:13px!important;font-weight:700!important;letter-spacing:0!important;text-transform:none!important}
+html .tdc-gsub > :first-child{font-family:"Figtree",system-ui,sans-serif!important;font-size:14px!important;font-weight:700!important;letter-spacing:0!important;text-transform:none!important;color:var(--ink,var(--fg))!important}
+@media (max-width:640px){html .tdc-gh{font-size:16px!important;margin-top:18px!important}}
+
+/* ---------- 3. Touch screens: iPhone, iPad, Android phones and tablets (DESIGN.md §9) ----------
+   Decided by "is this a touch screen", not by width, so an iPad in landscape (1180–1366px) still gets big targets. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+button,a,label,select,summary,[role="button"]{touch-action:manipulation}
+@media (pointer:coarse){
+  /* 44px is Apple's and Google's comfortable tap size */
+  html :is(button,select,.btn,[role="button"]):not(.tdc-compact):not(.tdc-info):not(.tdc-gh):not([hidden]){min-height:44px!important}
+  /* small round buttons (the banner (i), icon-only buttons) keep their look; give them a 44px invisible tap area instead */
+  html :is(.tdc-info,.tdc-compact){position:relative}
+  html :is(.tdc-info,.tdc-compact)::after{content:"";position:absolute;left:50%;top:50%;width:44px;height:44px;transform:translate(-50%,-50%)}
+  html :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]):not([type=hidden]),select,textarea){font-size:max(16px,1em)!important}
+  html input:is([type=checkbox],[type=radio]){min-width:22px;min-height:22px}
+  html .tdc-gh{min-height:44px}
+}
+/* No hover-only information: anything shown on hover must also be reachable by tap. Hover tints only where a mouse exists. */
+@media (hover:none){html .tdc-hover-only{display:none!important}}
+
+/* ---------- 4. Pop-up messages (toasts) ---------- */
+html .tdc-toast{background:var(--ink,var(--fg))!important;color:var(--bg)!important;border-radius:10px!important;padding:10px 14px!important;
+  font:600 14px/1.35 "Figtree",system-ui,sans-serif!important;box-shadow:0 8px 24px rgba(0,0,0,.25)!important;max-width:min(440px,calc(100% - 32px))!important}
+html .tdc-toast :is(button,a){color:var(--accent-soft)!important;font-weight:700!important;background:none!important;border:0!important;text-decoration:none!important}
+
+/* ---------- 5. Dialogs and sheets ----------
+   tdc-scrim = the dimmed page behind; tdc-dialog = the box. Phone: slides up from the bottom (sheet). */
+html .tdc-scrim{background:rgba(17,25,28,.55)!important}
+html .tdc-dialog{background:var(--surface)!important;color:var(--ink,var(--fg));border-radius:16px!important;border:1px solid var(--line);border-top:4px solid var(--pg,var(--accent))!important;box-shadow:0 18px 48px rgba(0,0,0,.28)!important}
+html .tdc-dialog :is(h2,h3,.tdc-dtitle):first-child,html .tdc-dialog .tdc-dtitle{font-family:"Archivo",system-ui,sans-serif;font-stretch:85%;font-weight:700;letter-spacing:.01em}
+@media (max-width:640px){html .tdc-dialog.tdc-sheet,html .tdc-sheet .tdc-dialog{border-radius:16px 16px 0 0!important;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))!important}}
+
+/* ---------- 6. Form fields inside dialogs, sheets and Setup ---------- */
+html :is(.tdc-dialog,.tdc-form) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),select,textarea){
+  background:var(--sunk);color:var(--ink,var(--fg));border:1px solid var(--line);border-radius:8px;font-family:"Figtree",system-ui,sans-serif}
+html :is(.tdc-dialog,.tdc-form) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),select){min-height:40px}
+html :is(.tdc-dialog,.tdc-form) :is(input,select,textarea):focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+html :is(input[type=checkbox],input[type=radio]){accent-color:var(--accent)}
+:focus-visible{outline-color:var(--accent)}
+
+/* ---------- 7. Printing (DESIGN.md §10) ---------- */
+@media print{
+  @page{margin:12mm}
+  html,html body{background:#fff!important;color:#000!important}
+  html .tdc-noprint,html .tdc-toast,html .tdc-scrim,html .tdc-line,html .tdc-gh .tdc-gchev{display:none!important}
+  html .tdc-gfold{display:revert!important}
+  html *{box-shadow:none!important;text-shadow:none!important}
+  html .tdc-gh{break-after:avoid;page-break-after:avoid;color:#000!important}
+  html :has(> .tdc-gh) > *{break-inside:avoid;page-break-inside:avoid}
+  html a{text-decoration:none!important;color:inherit!important}
+}

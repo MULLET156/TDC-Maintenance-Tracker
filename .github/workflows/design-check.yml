@@ -1,0 +1,42 @@
+# Design check (TDC-Office-Plan DESIGN.md §9): the shared files must match TDC-Office-Plan,
+# and the app must not load fonts from an outside site.
+# If it fails: copy brand/tdc-shared.css and brand/tdc-shared.js from
+# https://github.com/MULLET156/tdc-office-plan into this repo (next to index.html). Never edit them here.
+name: Design check
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  shared-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shared files match TDC-Office-Plan
+        run: |
+          set -e
+          base=https://raw.githubusercontent.com/MULLET156/tdc-office-plan/main/brand
+          bad=0
+          for f in tdc-shared.css tdc-shared.js; do
+            curl -fsSL "$base/$f" -o "/tmp/$f"
+            if ! cmp -s "$f" "/tmp/$f"; then
+              echo "::error file=$f::$f differs from TDC-Office-Plan brand/$f. Copy it from TDC-Office-Plan; don't edit it here."
+              diff -u "/tmp/$f" "$f" | head -40 || true
+              bad=1
+            fi
+          done
+          for f in figtree.woff2 archivo.woff2 jetbrains-mono.woff2; do
+            [ -s "fonts/$f" ] || { echo "::error::fonts/$f is missing (copy it from TDC-Office-Plan brand/fonts/)"; bad=1; }
+          done
+          exit $bad
+      - name: No outside fonts, shared files linked
+        run: |
+          bad=0
+          if grep -nE 'fonts\.(googleapis|gstatic)\.com|use\.typekit|fonts\.bunny' index.html; then
+            echo "::error file=index.html::Fonts must come from fonts/ in this app, not an outside site (DESIGN.md §3)."; bad=1; fi
+          grep -q 'href="tdc-shared.css"' index.html || { echo "::error file=index.html::index.html must link tdc-shared.css"; bad=1; }
+          grep -q 'src="tdc-shared.js"' index.html || { echo "::error file=index.html::index.html must load tdc-shared.js"; bad=1; }
+          exit $bad
