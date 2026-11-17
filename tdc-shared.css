@@ -36,7 +36,9 @@ html .tdc-gh .tdc-gchev{display:inline-flex!important;align-items:center!importa
 html .tdc-gh .tdc-gchev svg{width:18px!important;height:18px!important}
 html .tdc-gh[aria-expanded="false"] .tdc-gchev{transform:rotate(-90deg)!important}
 html .tdc-gh:focus-visible{outline:2px solid var(--accent)!important;outline-offset:3px!important;border-radius:6px!important}
-html .tdc-gh a,html .tdc-gh button,html .tdc-gh label,html .tdc-gh input{text-transform:none!important;letter-spacing:0!important;font-stretch:normal!important}
+html .tdc-gh > :first-child > a{font:inherit!important;letter-spacing:inherit!important;text-transform:inherit!important;color:inherit!important;text-decoration:none!important;display:inline-flex!important;align-items:center!important;gap:8px!important}
+html .tdc-gh > :first-child > a:hover{text-decoration:underline!important}
+html .tdc-gh button,html .tdc-gh label,html .tdc-gh input,html .tdc-gh > :not(:first-child) a{text-transform:none!important;letter-spacing:0!important;font-stretch:normal!important}
 html .tdc-gfold{display:none!important}
 html .tdc-gsub{background:var(--sunk)!important;color:var(--ink,var(--fg))!important;font-size:13px!important;font-weight:700!important;letter-spacing:0!important;text-transform:none!important}
 html .tdc-gsub > :first-child{font-family:"Figtree",system-ui,sans-serif!important;font-size:14px!important;font-weight:700!important;letter-spacing:0!important;text-transform:none!important;color:var(--ink,var(--fg))!important}
