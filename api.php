@@ -105,6 +105,11 @@ function ensure_schema(PDO $pdo, string $driver): void {
         pw_fp CHAR(16) NOT NULL,
         expires BIGINT NOT NULL
     )$cs");
+    // Settings the page itself can never read back through the document calls (the Dashboard tile code).
+    $pdo->exec("CREATE TABLE IF NOT EXISTS tdc_secrets (
+        k VARCHAR(32) NOT NULL PRIMARY KEY,
+        v VARCHAR(255) NOT NULL
+    )$cs");
     $pdo->exec("CREATE TABLE IF NOT EXISTS tdc_fails (
         ip VARCHAR(64) NOT NULL,
         ts BIGINT NOT NULL
@@ -286,6 +291,28 @@ function read_query(PDO $pdo, array $r): array {
 
 try {
     switch ($op) {
+        case 'tiletoken': {
+            // The Dental Dashboard's tile code (TDC-Office-Plan#23): see whether it's on, copy it,
+            // make a new one or turn tiles off. A code in config.php wins and can't be changed here.
+            $do = (string)($req['do'] ?? 'status');
+            $cfgTok = defined('TILE_TOKEN') ? trim((string)TILE_TOKEN) : '';
+            $st = $pdo->prepare("SELECT v FROM tdc_secrets WHERE k = 'TILE_TOKEN'"); $st->execute();
+            $dbTok = (string)($st->fetch()['v'] ?? '');
+            if ($do === 'new' || $do === 'off') {
+                if ($cfgTok !== '') fail(400, 'invalid_argument', 'The tile code is set in config.php on the server, so change it there.');
+                $pdo->prepare("DELETE FROM tdc_secrets WHERE k = 'TILE_TOKEN'")->execute();
+                $dbTok = '';
+                if ($do === 'new') {
+                    $dbTok = bin2hex(random_bytes(32));
+                    $pdo->prepare("INSERT INTO tdc_secrets (k, v) VALUES ('TILE_TOKEN', ?)")->execute([$dbTok]);
+                }
+            }
+            $tok = $cfgTok !== '' ? $cfgTok : $dbTok;
+            $res = ['ok' => true, 'on' => strlen($tok) >= 32, 'source' => $cfgTok !== '' ? 'config' : ($dbTok !== '' ? 'setup' : '')];
+            if ($do !== 'status') $res['key'] = $tok;      // only sent when someone asks to copy it
+            out(200, $res);
+        }
+
         case 'rev':
             out(200, ['ok' => true, 'rev' => current_rev($pdo)]);
 

@@ -16,9 +16,8 @@ define('DB_NAME', 'u000000000_tracker');
 define('DB_USER', 'u000000000_tracker');
 define('DB_PASS', 'database-password-here');
 
-// Dental Dashboard tiles (optional). Leave empty to keep tiles turned off.
-// To turn them on, put a long random value here (at least 32 characters, for example
-// 64 hex characters from a password generator) and give the same value to the Dashboard.
+// Dental Dashboard tiles (optional). Easiest: leave this empty and use Setup › Dashboard tiles.
+// A value here (at least 32 random characters) wins over the one made in Setup.
 define('TILE_TOKEN', '');
 // The tracker's own web address, used for the links on the tiles (optional).
 // define('APP_URL', 'https://your-tracker-site.example');

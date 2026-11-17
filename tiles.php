@@ -6,7 +6,8 @@
  * (TDC-Office-Plan CONTRACT §5 plus the standalone-app rules agreed in TDC-Office-Plan#23).
  *
  * Only the Dashboard's server calls this, with  Authorization: Bearer <TILE_TOKEN>.
- * TILE_TOKEN lives in config.php on the server (never in GitHub). No token set = tiles off (404).
+ * The code is made in Setup › Dashboard tiles (kept in the tdc_secrets table, which the page can't read
+ * back through its data calls), or set as TILE_TOKEN in config.php, which wins. No code = tiles off (404).
  * Tiles hold task names, frequencies, dates and counts. This app has no patient data.
  *
  * The page keeps a small snapshot in settings/tiles: for each active task, the day it turns
@@ -33,8 +34,6 @@ function tile_out(int $code, array $body = []): void {
 $cfg = __DIR__ . '/config.php';
 if (!is_file($cfg)) tile_out(404);
 require $cfg;
-$token = defined('TILE_TOKEN') ? (string)TILE_TOKEN : '';
-if (strlen($token) < 32) tile_out(404);                       // tiles turned off
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') tile_out(405);
 
 $id = (string)($_GET['id'] ?? '');
@@ -53,6 +52,16 @@ try {
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 } catch (Throwable $e) { tile_out(503); }
+
+/* ---------- the tile code: config.php first, else the one made in Setup › Dashboard tiles ---------- */
+$token = defined('TILE_TOKEN') ? trim((string)TILE_TOKEN) : '';
+if ($token === '') {
+    try {
+        $st = $pdo->prepare("SELECT v FROM tdc_secrets WHERE k = 'TILE_TOKEN'"); $st->execute();
+        $token = (string)($st->fetch()['v'] ?? '');
+    } catch (Throwable $e) { $token = ''; }   // table not made yet = tiles off
+}
+if (strlen($token) < 32) tile_out(404);                       // tiles turned off
 
 /* ---------- rate limit (checked before the token, so guessing is slow too) ---------- */
 try {
